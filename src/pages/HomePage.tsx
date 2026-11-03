@@ -152,7 +152,7 @@ export const HomePage: React.FC = () => {
                     className="p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:border-blue-300 transition-colors uppercase"
                   >
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-900 truncate">
+                      <div className="text-xs font-black text-black truncate">
                         {teacher.name}
                       </div>
                       <div className="text-[11px] font-semibold text-blue-700">

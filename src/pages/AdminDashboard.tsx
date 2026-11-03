@@ -97,7 +97,7 @@ export const AdminDashboard: React.FC = () => {
     setLoginError('');
     const ok = loginAdmin(loginUser, loginPass);
     if (!ok) {
-      setLoginError('Username atau Password salah! Pastikan Username "Admin" dan Password "pjok123".');
+      setLoginError('Username atau Password yang Anda masukkan tidak valid. Silakan periksa kembali.');
     } else {
       setLoginPass('');
     }
@@ -333,7 +333,7 @@ export const AdminDashboard: React.FC = () => {
                   required
                   value={loginUser}
                   onChange={(e) => setLoginUser(e.target.value)}
-                  placeholder="Masukkan username (Admin)"
+                  placeholder="Masukkan username admin"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 font-medium"
                 />
               </div>
@@ -350,7 +350,7 @@ export const AdminDashboard: React.FC = () => {
                   required
                   value={loginPass}
                   onChange={(e) => setLoginPass(e.target.value)}
-                  placeholder="Masukkan password (pjok123)"
+                  placeholder="Masukkan password"
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-blue-600 font-medium"
                 />
                 <button
@@ -881,33 +881,39 @@ export const AdminDashboard: React.FC = () => {
                           className="w-14 h-14 rounded-2xl object-cover border border-slate-300 dark:border-slate-700 shrink-0 bg-white"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="min-w-0 space-y-0.5">
+                        <div className="min-w-0 space-y-1">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase ${
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
                               t.role === 'Pendamping'
-                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300'
+                                ? 'bg-purple-100 text-purple-950 dark:bg-purple-900/70 dark:text-purple-200 border border-purple-300'
                                 : t.role === 'Ketua'
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300'
+                                ? 'bg-blue-600 text-white'
                                 : t.role === 'Wakil Ketua'
-                                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300'
+                                ? 'bg-indigo-600 text-white'
                                 : t.role.startsWith('Sekretaris')
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
+                                ? 'bg-amber-600 text-white'
                                 : t.role.startsWith('Bendahara')
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
-                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-emerald-100 text-emerald-950 dark:bg-emerald-900/70 dark:text-emerald-200 border border-emerald-300'
                             }`}>
                               {t.role}
                             </span>
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              NIP: {t.nip && t.nip !== '-' ? t.nip : 'Non-ASN / Belum Terdata'}
-                            </span>
                           </div>
-                          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase truncate">
+
+                          {/* 1. NAMA */}
+                          <h4 className="text-sm font-black text-black dark:text-white uppercase truncate">
                             {t.name}
                           </h4>
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+
+                          {/* 2. NIP LANGSUNG DI BAWAH NAMA (TEKS SAJA TANPA BLOK WARNA) */}
+                          <div className="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-400">
+                            NIP. {t.nip && t.nip !== '-' ? t.nip : 'Non-ASN / Belum Terdata'}
+                          </div>
+
+                          {/* 3. SATUAN PENDIDIKAN DI BAWAH NIP */}
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 pt-0.5">
                             <School className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                            <span className="truncate uppercase font-medium">{t.school}</span>
+                            <span className="truncate uppercase">{t.school}</span>
                           </div>
                         </div>
                       </div>

@@ -93,7 +93,7 @@ export const AdminLoginModal: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan username (Admin)"
+                  placeholder="Masukkan username admin"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 text-slate-800 font-medium transition-colors"
                 />
               </div>
@@ -113,7 +113,7 @@ export const AdminLoginModal: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan password (pjok123)"
+                  placeholder="Masukkan password"
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl text-xs bg-slate-50 border border-slate-200 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 text-slate-800 font-medium transition-colors"
                 />
                 <button
