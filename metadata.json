@@ -1,0 +1,6 @@
+{
+  "name": "KKG PJOK SD KECAMATAN PAGU",
+  "description": "Portal Resmi Papan Informasi Kelompok Kerja Guru PJOK Sekolah Dasar Kecamatan Pagu, Kabupaten Kediri. Pusat literasi pembelajaran, perangkat ajar, program kerja, dan prestasi olahraga.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
