@@ -33,8 +33,10 @@ import {
   Shield,
   EyeOff,
   AlertCircle,
-  User
+  User,
+  School
 } from 'lucide-react';
+import { EditTeacherModal } from '../components/EditTeacherModal';
 import { 
   ServiceItem, 
   ProgramKKG, 
@@ -116,6 +118,31 @@ export const AdminDashboard: React.FC = () => {
 
   const [editingAgenda, setEditingAgenda] = useState<AgendaItem | null>(null);
   const [isNewAgenda, setIsNewAgenda] = useState(false);
+
+  // Teacher modal edit states
+  const [editingTeacher, setEditingTeacher] = useState<TeacherProfile | null>(null);
+  const [isNewTeacher, setIsNewTeacher] = useState(false);
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [teacherRoleTab, setTeacherRoleTab] = useState<'Semua' | 'Pendamping' | 'Pengurus' | 'Anggota'>('Semua');
+
+  const handleSaveTeacher = (updatedTeacher: TeacherProfile) => {
+    if (isNewTeacher) {
+      setTeachers(prev => [updatedTeacher, ...prev]);
+      showToast(`Data "${updatedTeacher.name}" berhasil ditambahkan!`, 'success');
+    } else {
+      setTeachers(prev => prev.map(t => t.id === updatedTeacher.id ? updatedTeacher : t));
+      showToast(`Data "${updatedTeacher.name}" berhasil diperbarui!`, 'success');
+    }
+    setEditingTeacher(null);
+    setIsNewTeacher(false);
+  };
+
+  const handleDeleteTeacher = (id: string) => {
+    setTeachers(prev => prev.filter(t => t.id !== id));
+    showToast('Data guru/pengurus telah dihapus', 'info');
+    setEditingTeacher(null);
+    setIsNewTeacher(false);
+  };
 
   // New media upload simulation state
   const [newMediaName, setNewMediaName] = useState('');
@@ -759,48 +786,160 @@ export const AdminDashboard: React.FC = () => {
           {/* TAB 3: KELOLA TENTANG & PENGURUS */}
           {activeTab === 'tentang' && (
             <div className={`p-6 sm:p-8 rounded-2xl border ${isAdminDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-6 animate-in fade-in`}>
-              <div className="flex items-center justify-between border-b border-slate-200/50 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/50 pb-4">
                 <div>
-                  <h2 className="text-lg font-bold">Daftar Pengurus & Pendamping KKG</h2>
-                  <p className="text-xs text-slate-500">Kelola 2 Pendamping dan Pengurus Inti.</p>
+                  <h2 className="text-lg font-bold">Kelola Pengurus, Pendamping & Anggota KKG</h2>
+                  <p className="text-xs text-slate-500">Edit foto, nama lengkap, NIP, jabatan, dan satuan pendidikan pengurus serta anggota.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNewTeacher(true);
+                    setEditingTeacher(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer self-start sm:self-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah Pendidik Baru</span>
+                </button>
+              </div>
+
+              {/* Filter Tabs & Search Bar */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                {/* Role Tabs */}
+                <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs">
+                  {(['Semua', 'Pendamping', 'Pengurus', 'Anggota'] as const).map((tab) => {
+                    const count = tab === 'Semua' 
+                      ? teachers.length
+                      : tab === 'Pendamping'
+                      ? teachers.filter(t => t.role === 'Pendamping').length
+                      : tab === 'Pengurus'
+                      ? teachers.filter(t => t.role !== 'Pendamping' && t.role !== 'Anggota').length
+                      : teachers.filter(t => t.role === 'Anggota').length;
+
+                    const isActive = teacherRoleTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setTeacherRoleTab(tab)}
+                        className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs shrink-0 cursor-pointer ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : isAdminDarkMode
+                            ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {tab} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Search Box */}
+                <div className="w-full md:w-72">
+                  <input
+                    type="text"
+                    value={teacherSearch}
+                    onChange={(e) => setTeacherSearch(e.target.value)}
+                    placeholder="Cari nama, NIP, atau sekolah..."
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs text-slate-900 dark:text-white"
+                  />
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {teachers.map((t, idx) => (
-                  <div
-                    key={t.id}
-                    className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/50' : 'border-slate-200 bg-slate-50'} flex flex-col sm:flex-row items-center justify-between gap-4`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={t.avatar}
-                        alt={t.name}
-                        className="w-12 h-12 rounded-full object-cover border border-slate-300"
-                      />
-                      <div>
-                        <div className="text-xs font-bold">{t.name}</div>
-                        <div className="text-[11px] font-semibold text-blue-600">{t.role} · {t.school}</div>
-                        <div className="text-[10px] text-slate-400">NIP: {t.nip || '-'}</div>
+              {/* Teachers List */}
+              <div className="space-y-3">
+                {teachers
+                  .filter((t) => {
+                    const matchesSearch = 
+                      t.name.toLowerCase().includes(teacherSearch.toLowerCase()) ||
+                      t.school.toLowerCase().includes(teacherSearch.toLowerCase()) ||
+                      (t.nip && t.nip.includes(teacherSearch));
+
+                    let matchesRole = true;
+                    if (teacherRoleTab === 'Pendamping') {
+                      matchesRole = t.role === 'Pendamping';
+                    } else if (teacherRoleTab === 'Pengurus') {
+                      matchesRole = t.role !== 'Pendamping' && t.role !== 'Anggota';
+                    } else if (teacherRoleTab === 'Anggota') {
+                      matchesRole = t.role === 'Anggota';
+                    }
+
+                    return matchesSearch && matchesRole;
+                  })
+                  .map((t) => (
+                    <div
+                      key={t.id}
+                      className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={t.avatar}
+                          alt={t.name}
+                          className="w-14 h-14 rounded-2xl object-cover border border-slate-300 dark:border-slate-700 shrink-0 bg-white"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase ${
+                              t.role === 'Pendamping'
+                                ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300'
+                                : t.role === 'Ketua'
+                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300'
+                                : t.role === 'Wakil Ketua'
+                                ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300'
+                                : t.role.startsWith('Sekretaris')
+                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300'
+                                : t.role.startsWith('Bendahara')
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
+                                : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'
+                            }`}>
+                              {t.role}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              NIP: {t.nip && t.nip !== '-' ? t.nip : 'Non-ASN / Belum Terdata'}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase truncate">
+                            {t.name}
+                          </h4>
+                          <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                            <School className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span className="truncate uppercase font-medium">{t.school}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsNewTeacher(false);
+                            setEditingTeacher(t);
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Edit Foto, Nama, NIP, Jabatan, Satuan Pendidikan"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit Data</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Yakin ingin menghapus "${t.name}" dari daftar?`)) {
+                              handleDeleteTeacher(t.id);
+                            }
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900 transition-colors cursor-pointer"
+                          title="Hapus Data"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          const newName = prompt('Ubah Nama:', t.name);
-                          if (newName) {
-                            setTeachers(prev => prev.map(item => item.id === t.id ? { ...item, name: newName } : item));
-                            showToast('Nama guru berhasil diubah!', 'success');
-                          }
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-800 text-xs font-semibold hover:bg-blue-200"
-                      >
-                        Edit Nama
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           )}
@@ -2073,6 +2212,19 @@ export const AdminDashboard: React.FC = () => {
           </form>
         </div>
       )}
+
+      {/* EDIT MODAL: PENGURUS & ANGGOTA (TEACHER PROFILE) */}
+      <EditTeacherModal
+        isOpen={!!editingTeacher || isNewTeacher}
+        onClose={() => {
+          setEditingTeacher(null);
+          setIsNewTeacher(false);
+        }}
+        teacher={editingTeacher}
+        isNew={isNewTeacher}
+        onSave={handleSaveTeacher}
+        onDelete={handleDeleteTeacher}
+      />
 
     </div>
   );
