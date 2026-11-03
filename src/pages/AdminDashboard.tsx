@@ -27,6 +27,7 @@ import {
   Layers,
   ArrowLeft,
   X,
+  Menu,
   ExternalLink,
   LogOut,
   Lock,
@@ -503,32 +504,174 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </aside>
 
+        {/* MOBILE DRAWER OVERLAY */}
+        {mobileSidebarOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex animate-in fade-in duration-200">
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity"
+              onClick={() => setMobileSidebarOpen(false)}
+            />
+
+            {/* Drawer Panel */}
+            <div 
+              className={`relative w-80 max-w-[85vw] ${
+                isAdminDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-800'
+              } h-full p-4 flex flex-col justify-between shadow-2xl z-10 overflow-y-auto animate-in slide-in-from-left duration-200`}
+            >
+              <div className="space-y-4">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200/50 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                      <img
+                        src="./assets/aistudio/1_00b40b6c.png"
+                        alt="Logo KKG PJOK"
+                        className="w-full h-full object-contain filter drop-shadow-xs"
+                      />
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-xs tracking-tight">Admin KKG PJOK</div>
+                      <div className="text-[10px] text-slate-400">Pagu, Kab. Kediri</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    aria-label="Tutup menu admin"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Tab Menu List */}
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                  Pilih Menu Kelola
+                </div>
+                <nav className="space-y-1">
+                  {menuItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setMobileSidebarOpen(false);
+                        }}
+                        className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
+                            : isAdminDarkMode
+                            ? 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        {item.icon}
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Bottom Action inside Drawer */}
+              <div className="pt-4 mt-4 border-t border-slate-200/50 dark:border-slate-800 space-y-2">
+                <button
+                  onClick={() => {
+                    setCurrentPage('beranda');
+                    setMobileSidebarOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Lihat Website Utama</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    logoutAdmin();
+                    setMobileSidebarOpen(false);
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar / Logout Admin</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* MAIN DASHBOARD CONTENT AREA */}
-        <main className="flex-1 p-4 sm:p-8 max-w-6xl overflow-x-hidden">
+        <main className="flex-1 p-3.5 sm:p-6 md:p-8 max-w-6xl overflow-x-hidden min-w-0">
           
-          {/* Top Mobile Bar */}
-          <div className="flex md:hidden items-center justify-between pb-4 mb-6 border-b border-slate-200">
-            <div className="font-extrabold text-sm">Dashboard Admin KKG</div>
-            <div className="flex items-center gap-2">
+          {/* TOP MOBILE BAR & QUICK TABS */}
+          <div className="md:hidden pb-3 mb-6 space-y-3 border-b border-slate-200/80 dark:border-slate-800">
+            {/* Mobile Top Header */}
+            <div className="flex items-center justify-between gap-2">
               <button
-                onClick={() => setIsAdminDarkMode(!isAdminDarkMode)}
-                className="p-1.5 rounded-lg border text-xs"
+                type="button"
+                onClick={() => setMobileSidebarOpen(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs shadow-xs cursor-pointer active:scale-95 transition-all"
               >
-                {isAdminDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+                <Menu className="w-4 h-4" />
+                <span>Menu Admin</span>
               </button>
-              <button
-                onClick={() => setCurrentPage('beranda')}
-                className="p-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold"
-              >
-                Website
-              </button>
-              <button
-                onClick={logoutAdmin}
-                className="p-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold flex items-center gap-1"
-                title="Logout Admin"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setIsAdminDarkMode(!isAdminDarkMode)}
+                  className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-800"
+                  title={isAdminDarkMode ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+                >
+                  {isAdminDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-slate-600" />}
+                </button>
+                <button
+                  onClick={() => setCurrentPage('beranda')}
+                  className="px-2.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-200 dark:border-slate-700 hover:bg-slate-200 transition-colors"
+                >
+                  Website
+                </button>
+                <button
+                  onClick={logoutAdmin}
+                  className="p-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 transition-colors"
+                  title="Logout Admin"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Horizontal Quick Tabs Bar (Smooth Swipe / Tap) */}
+            <div className="overflow-x-auto flex items-center gap-1.5 pb-1">
+              {menuItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : isAdminDarkMode
+                        ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                        : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 shadow-2xs'
+                    }`}
+                  >
+                    {item.icon}
+                    <span>{item.label.replace('Kelola ', '').replace('Manager (Upload)', '')}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Active Tab Indicator Badge */}
+            <div className="flex items-center justify-between text-[11px] px-1 text-slate-500 dark:text-slate-400">
+              <span>Sedang membuka:</span>
+              <span className="font-extrabold text-blue-600 dark:text-blue-400">
+                {menuItems.find(m => m.id === activeTab)?.label}
+              </span>
             </div>
           </div>
 
@@ -918,14 +1061,14 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-200 dark:border-slate-700/80">
                         <button
                           type="button"
                           onClick={() => {
                             setIsNewTeacher(false);
                             setEditingTeacher(t);
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 font-bold text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                          className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
                           title="Edit Foto, Nama, NIP, Jabatan, Satuan Pendidikan"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
@@ -938,7 +1081,7 @@ export const AdminDashboard: React.FC = () => {
                               handleDeleteTeacher(t.id);
                             }
                           }}
-                          className="p-1.5 rounded-lg bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900 transition-colors cursor-pointer"
+                          className="p-2 rounded-xl bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900 transition-colors cursor-pointer border border-rose-200 dark:border-rose-800"
                           title="Hapus Data"
                         >
                           <Trash2 className="w-4 h-4" />

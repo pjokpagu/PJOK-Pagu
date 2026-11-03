@@ -85,17 +85,18 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Zone 3: Primary Action (Dashboard Admin & Contact Quick Link) */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <button
               onClick={handleAdminClick}
-              className={`hidden sm:inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-200 whitespace-nowrap shrink-0 ${
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-xl transition-all duration-200 whitespace-nowrap shrink-0 shadow-xs cursor-pointer ${
                 currentPage === 'admin'
                   ? 'bg-blue-700 text-white shadow-sm'
                   : 'bg-slate-900 text-white hover:bg-slate-800'
               }`}
+              title="Akses Dashboard Admin"
             >
               <Shield className="w-3.5 h-3.5 text-rose-400" />
-              <span>Dashboard Admin</span>
+              <span>Admin</span>
             </button>
 
             {/* Mobile menu trigger */}
