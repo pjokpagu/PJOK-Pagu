@@ -20,6 +20,16 @@ export const AboutPage: React.FC = () => {
   const pendamping = teachers.filter(t => t.role === 'Pendamping');
   const pengurusInti = teachers.filter(t => t.role !== 'Pendamping' && t.role !== 'Anggota');
 
+  // Dynamic count of unique schools represented by teachers
+  const uniqueSchools = Array.from(
+    new Set(
+      teachers
+        .map((t) => t.school?.replace(/^Kepala\s+/i, '').trim())
+        .filter((s) => Boolean(s) && s !== '-')
+    )
+  );
+  const totalSD = uniqueSchools.length > 0 ? uniqueSchools.length : 19;
+
   const filteredTeachers = teachers.filter((teacher) => {
     const matchesSearch = 
       teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -169,7 +179,7 @@ export const AboutPage: React.FC = () => {
               Pengurus Harian KKG PJOK SD Kecamatan Pagu
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              Amanah kepengurusan yang menggerakkan program kerja dan pelayanan guru olahraga di 19 SD se-Kecamatan Pagu.
+              Amanah kepengurusan yang menggerakkan program kerja dan pelayanan guru olahraga di {totalSD} SD se-Kecamatan Pagu.
             </p>
           </div>
         </div>
@@ -257,7 +267,7 @@ export const AboutPage: React.FC = () => {
               Daftar Anggota KKG Kecamatan Pagu
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              Data lengkap guru Pendidikan Jasmani, Olahraga, dan Kesehatan dari 19 Sekolah Dasar se-Kecamatan Pagu.
+              Data lengkap guru Pendidikan Jasmani, Olahraga, dan Kesehatan dari {totalSD} Sekolah Dasar se-Kecamatan Pagu.
             </p>
           </div>
 

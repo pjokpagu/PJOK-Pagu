@@ -27,6 +27,17 @@ export const HomePage: React.FC = () => {
     ['Pendamping', 'Ketua', 'Wakil Ketua', 'Sekretaris 1', 'Bendahara 1'].includes(t.role)
   ).slice(0, 6);
 
+  // Dynamic statistics synchronized directly with the admin dashboard data
+  const totalGuru = teachers.length;
+  const uniqueSchools = Array.from(
+    new Set(
+      teachers
+        .map((t) => t.school?.replace(/^Kepala\s+/i, '').trim())
+        .filter((s) => Boolean(s) && s !== '-')
+    )
+  );
+  const totalSD = uniqueSchools.length > 0 ? uniqueSchools.length : 19;
+
   return (
     <div className="space-y-24 pb-20 overflow-hidden">
       
@@ -73,11 +84,11 @@ export const HomePage: React.FC = () => {
               {/* Trust Metric Row */}
               <div className="pt-6 border-t border-slate-200/80 grid grid-cols-3 gap-6 max-w-lg">
                 <div>
-                  <div className="text-2xl font-black text-slate-900 tabular-nums">19 SD</div>
+                  <div className="text-2xl font-black text-slate-900 tabular-nums">{totalSD} SD</div>
                   <div className="text-xs text-slate-500 font-medium">Negeri & Swasta Pagu</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-blue-700 tabular-nums">16 Guru</div>
+                  <div className="text-2xl font-black text-blue-700 tabular-nums">{totalGuru} Guru</div>
                   <div className="text-xs text-slate-500 font-medium">Pendidik PJOK Aktif</div>
                 </div>
                 <div>
@@ -172,7 +183,7 @@ export const HomePage: React.FC = () => {
                 onClick={() => setCurrentPage('tentang-kami')}
                 className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 hover:text-blue-800"
               >
-                <span>Lihat Struktur Lengkap 8 Pengurus & Pendamping</span>
+                <span>Lihat Struktur Lengkap {totalGuru} Pengurus & Anggota</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
