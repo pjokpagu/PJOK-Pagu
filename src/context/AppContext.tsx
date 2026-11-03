@@ -129,14 +129,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [teachers, setTeachers] = useState<TeacherProfile[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_PREFIX + 'teachers');
-    if (saved) { 
-      try { 
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_PREFIX + 'teachers');
+      if (saved) { 
         const parsed = JSON.parse(saved); 
-        if (Array.isArray(parsed) && parsed.length >= initialTeachers.length) {
-          return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((t: any, idx: number) => ({
+            id: t?.id || `teacher-${idx + 1}`,
+            name: typeof t?.name === 'string' ? t.name : 'Nama Guru',
+            role: typeof t?.role === 'string' ? t.role : 'Anggota',
+            school: typeof t?.school === 'string' ? t.school : 'SD di Pagu',
+            nip: typeof t?.nip === 'string' ? t.nip : '-',
+            gender: t?.gender === 'Perempuan' ? 'Perempuan' : 'Laki-laki',
+            avatar: typeof t?.avatar === 'string' && t.avatar.trim() ? t.avatar : initialTeachers[idx]?.avatar || '',
+            bio: typeof t?.bio === 'string' ? t.bio : '',
+            specialization: typeof t?.specialization === 'string' ? t.specialization : ''
+          }));
         }
-      } catch (e) {} 
+      }
+    } catch (e) {
+      console.warn('Failed to load teachers from storage:', e);
     }
     return initialTeachers;
   });
@@ -264,57 +276,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return initialSettings;
   });
 
-  // Sync to localStorage
+  // Safe localStorage helper to prevent QuotaExceededError crashes
+  const safeLocalStorageSet = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (err: any) {
+      console.warn(`[AppContext] Storage quota limit for key "${key}":`, err);
+      // Attempt safe cleanup of media list to free up memory
+      try {
+        localStorage.removeItem(STORAGE_KEY_PREFIX + 'media');
+        localStorage.setItem(key, value);
+      } catch (e) {
+        console.warn('[AppContext] Storage still full, skipping persistent cache for this turn');
+      }
+    }
+  };
+
+  // Sync to localStorage safely
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'hero', JSON.stringify(hero));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify(hero));
   }, [hero]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'partners', JSON.stringify(partners));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'partners', JSON.stringify(partners));
   }, [partners]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'teachers', JSON.stringify(teachers));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'teachers', JSON.stringify(teachers));
   }, [teachers]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'services', JSON.stringify(services));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'services', JSON.stringify(services));
   }, [services]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'programs', JSON.stringify(programs));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'programs', JSON.stringify(programs));
   }, [programs]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'materials', JSON.stringify(materials));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'materials', JSON.stringify(materials));
   }, [materials]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'articles', JSON.stringify(articles));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'articles', JSON.stringify(articles));
   }, [articles]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'activities', JSON.stringify(activities));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'activities', JSON.stringify(activities));
   }, [activities]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'agenda', JSON.stringify(agenda));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'agenda', JSON.stringify(agenda));
   }, [agenda]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'testimonials', JSON.stringify(testimonials));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'testimonials', JSON.stringify(testimonials));
   }, [testimonials]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'settings', JSON.stringify(settings));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'settings', JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFIX + 'media', JSON.stringify(mediaList));
+    safeLocalStorageSet(STORAGE_KEY_PREFIX + 'media', JSON.stringify(mediaList));
   }, [mediaList]);
 
   useEffect(() => {
-    localStorage.setItem('kkg_admin_dark', isAdminDarkMode ? 'true' : 'false');
+    safeLocalStorageSet('kkg_admin_dark', isAdminDarkMode ? 'true' : 'false');
   }, [isAdminDarkMode]);
 
   // Window scroll to top on page change

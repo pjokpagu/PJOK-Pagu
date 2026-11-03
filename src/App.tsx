@@ -9,6 +9,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { HomePage } from './pages/HomePage';
 import { AboutPage } from './pages/AboutPage';
@@ -96,8 +97,10 @@ const MainContent: React.FC = () => {
 
 export default function App() {
   return (
-    <AppProvider>
-      <MainContent />
-    </AppProvider>
+    <ErrorBoundary>
+      <AppProvider>
+        <MainContent />
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
