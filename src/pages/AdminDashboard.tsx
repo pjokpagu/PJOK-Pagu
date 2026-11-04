@@ -1668,52 +1668,73 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {programs.map((prog) => (
-                  <div
-                    key={prog.id}
-                    className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                          {prog.category}
-                        </span>
-                        <span className="text-xs text-slate-400">{prog.date}</span>
-                      </div>
-                      <h4 className="text-sm font-bold mt-1">{prog.title}</h4>
-                      <p className="text-xs text-slate-500">{prog.location}</p>
-                    </div>
+                {programs.map((prog) => {
+                  const isGdrive = isGDriveUrl(prog.image) || prog.image?.includes('googleusercontent.com');
+                  return (
+                    <div
+                      key={prog.id}
+                      className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        {/* Program Photo Thumbnail */}
+                        <div className="w-16 h-14 sm:w-20 sm:h-16 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 relative group">
+                          <img
+                            src={prog.image || './assets/images/kkg_teachers_meeting_1793250246883.jpg'}
+                            alt={prog.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            referrerPolicy="no-referrer"
+                          />
+                          {isGdrive && (
+                            <span className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-emerald-600 text-[8px] font-bold text-white shadow-xs">
+                              GDrive
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <a
-                        href={prog.driveLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        title="Buka Drive"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                      <button
-                        onClick={() => {
-                          setIsNewProgram(false);
-                          setEditingProgram(prog);
-                        }}
-                        className="p-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
-                        title="Edit Program"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProgram(prog.id)}
-                        className="p-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100"
-                        title="Hapus Program"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
+                              {prog.category}
+                            </span>
+                            <span className="text-xs text-slate-400">{prog.date}</span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{prog.title}</h4>
+                          <p className="text-xs text-slate-500 truncate">{prog.location}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <a
+                          href={prog.driveLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                          title="Buka Folder Google Drive"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                        <button
+                          onClick={() => {
+                            setIsNewProgram(false);
+                            setEditingProgram(prog);
+                          }}
+                          className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                          title="Edit Program & Foto Kegiatan"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit Foto &amp; Data</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProgram(prog.id)}
+                          className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+                          title="Hapus Program"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1823,45 +1844,66 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {materials.map((mat) => (
-                  <div
-                    key={mat.id}
-                    className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
-                          {mat.grade}
-                        </span>
-                        <span className="text-[10px] font-medium text-slate-500">
-                          {mat.category}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold mt-1">{mat.title}</h4>
-                      <p className="text-[11px] text-slate-500">{mat.author} ({mat.schoolOrigin}) · {mat.fileSize}</p>
-                    </div>
+                {materials.map((mat) => {
+                  const isGdrive = isGDriveUrl(mat.thumbnail) || mat.thumbnail?.includes('googleusercontent.com');
+                  return (
+                    <div
+                      key={mat.id}
+                      className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} flex flex-col sm:flex-row sm:items-center justify-between gap-4`}
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        {/* Material Thumbnail */}
+                        <div className="w-16 h-14 sm:w-20 sm:h-16 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 relative group">
+                          <img
+                            src={mat.thumbnail || './assets/images/hero_sport_education_1793250246629.jpg'}
+                            alt={mat.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                            referrerPolicy="no-referrer"
+                          />
+                          {isGdrive && (
+                            <span className="absolute bottom-1 right-1 px-1 py-0.5 rounded bg-emerald-600 text-[8px] font-bold text-white shadow-xs">
+                              GDrive
+                            </span>
+                          )}
+                        </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => {
-                          setIsNewMaterial(false);
-                          setEditingMaterial(mat);
-                        }}
-                        className="p-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100"
-                        title="Edit Perangkat"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteMaterial(mat.id)}
-                        className="p-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100"
-                        title="Hapus Perangkat"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300">
+                              {mat.grade}
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-500">
+                              {mat.category}
+                            </span>
+                          </div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{mat.title}</h4>
+                          <p className="text-[11px] text-slate-500 truncate">{mat.author} ({mat.schoolOrigin}) · {mat.fileSize}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          onClick={() => {
+                            setIsNewMaterial(false);
+                            setEditingMaterial(mat);
+                          }}
+                          className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                          title="Edit Perangkat & Foto Sampul"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit Foto &amp; Data</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteMaterial(mat.id)}
+                          className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/60 transition-colors"
+                          title="Hapus Perangkat"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2538,8 +2580,69 @@ export const AdminDashboard: React.FC = () => {
                   required
                   value={editingProgram.title}
                   onChange={(e) => setEditingProgram({ ...editingProgram, title: e.target.value })}
+                  placeholder="Contoh: Bimtek Implementasi Modul Ajar PJOK"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
                 />
+              </div>
+
+              {/* Photo Input with Google Drive Integration & Live Preview */}
+              <div className="p-3.5 bg-blue-50/70 dark:bg-slate-800/80 rounded-2xl border border-blue-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-blue-950 dark:text-blue-300 flex items-center gap-1.5">
+                    <FolderUp className="w-4 h-4 text-blue-600" />
+                    <span>Foto / Dokumentasi Kegiatan Program (Link Google Drive / URL Gambar) *</span>
+                  </label>
+                  {extractGDriveFileId(editingProgram.image || '') && (
+                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      ID GDrive Terdeteksi
+                    </span>
+                  )}
+                </div>
+
+                <input
+                  type="text"
+                  value={editingProgram.image || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const direct = convertGDriveToDirectImageUrl(val);
+                    setEditingProgram({ ...editingProgram, image: direct });
+                  }}
+                  placeholder="Tempel link sharing Google Drive foto kegiatan atau URL gambar..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900 font-mono text-[11px] focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                />
+
+                <p className="text-[10px] text-slate-500">
+                  💡 <em>Bisa tempel link Google Drive langsung (pastikan izin akses: "Siapa saja yang memiliki link"). Foto otomatis tampil di halaman Program website.</em>
+                </p>
+
+                {editingProgram.image && (
+                  <div className="flex items-center gap-3.5 p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <div className="w-24 h-16 sm:w-28 sm:h-20 rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 relative">
+                      <img
+                        src={convertGDriveToDirectImageUrl(editingProgram.image)}
+                        alt="Preview Foto Program"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Pratinjau Foto Dokumentasi Program</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono truncate max-w-sm">
+                        {editingProgram.image}
+                      </div>
+                      <div className="text-[10px] text-emerald-600 font-medium">
+                        ✓ Terkoneksi ke kartu &amp; detail Program KKG website
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -2802,8 +2905,69 @@ export const AdminDashboard: React.FC = () => {
                   type="text"
                   value={editingMaterial.downloadUrl}
                   onChange={(e) => setEditingMaterial({ ...editingMaterial, downloadUrl: e.target.value })}
+                  placeholder="https://drive.google.com/..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
                 />
+              </div>
+
+              {/* Photo Thumbnail with Google Drive Integration & Live Preview */}
+              <div className="p-3.5 bg-rose-50/70 dark:bg-slate-800/80 rounded-2xl border border-rose-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-rose-950 dark:text-rose-300 flex items-center gap-1.5">
+                    <FolderUp className="w-4 h-4 text-rose-600" />
+                    <span>Foto Sampul / Thumbnail Modul Ajar (Google Drive / URL Gambar) *</span>
+                  </label>
+                  {extractGDriveFileId(editingMaterial.thumbnail || '') && (
+                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      ID GDrive Terdeteksi
+                    </span>
+                  )}
+                </div>
+
+                <input
+                  type="text"
+                  value={editingMaterial.thumbnail || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const direct = convertGDriveToDirectImageUrl(val);
+                    setEditingMaterial({ ...editingMaterial, thumbnail: direct });
+                  }}
+                  placeholder="Tempel link Google Drive foto sampul atau URL gambar..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900 font-mono text-[11px] focus:outline-hidden focus:ring-2 focus:ring-rose-500"
+                />
+
+                <p className="text-[10px] text-slate-500">
+                  💡 <em>Foto ini akan ditampilkan sebagai thumbnail berkas modul di halaman website.</em>
+                </p>
+
+                {editingMaterial.thumbnail && (
+                  <div className="flex items-center gap-3.5 p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                    <div className="w-24 h-16 sm:w-28 sm:h-20 rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-slate-200 dark:border-slate-700 relative">
+                      <img
+                        src={convertGDriveToDirectImageUrl(editingMaterial.thumbnail)}
+                        alt="Preview Thumbnail Modul"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1 min-w-0">
+                      <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Pratinjau Sampul Modul Ajar</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono truncate max-w-sm">
+                        {editingMaterial.thumbnail}
+                      </div>
+                      <div className="text-[10px] text-emerald-600 font-medium">
+                        ✓ Tampil di kartu Perangkat Pembelajaran website
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
