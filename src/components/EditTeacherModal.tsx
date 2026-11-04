@@ -11,8 +11,10 @@ import {
   Trash2, 
   AlertCircle,
   Link as LinkIcon,
-  Loader2
+  Loader2,
+  FolderUp
 } from 'lucide-react';
+import { convertGDriveToDirectImageUrl, extractGDriveFileId, isGDriveUrl } from '../utils/gdrive';
 
 interface EditTeacherModalProps {
   isOpen: boolean;
@@ -125,6 +127,8 @@ export const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
   const [specialization, setSpecialization] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+  const [showGdriveInput, setShowGdriveInput] = useState(false);
+  const [gdriveUrl, setGdriveUrl] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
 
@@ -203,8 +207,25 @@ export const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
       setErrorMsg('Harap masukkan URL foto yang valid.');
       return;
     }
-    setAvatar(trimmed);
+    const finalUrl = convertGDriveToDirectImageUrl(trimmed);
+    setAvatar(finalUrl);
     setShowUrlInput(false);
+    setErrorMsg('');
+  };
+
+  const handleApplyGdrive = () => {
+    const trimmed = gdriveUrl.trim();
+    if (!trimmed) {
+      setErrorMsg('Harap masukkan link Google Drive foto.');
+      return;
+    }
+    const finalUrl = convertGDriveToDirectImageUrl(trimmed);
+    if (!finalUrl || (finalUrl === trimmed && !trimmed.startsWith('https://'))) {
+      setErrorMsg('Format link Google Drive tidak valid. Pastikan link diawali dengan https://drive.google.com/file/d/...');
+      return;
+    }
+    setAvatar(finalUrl);
+    setShowGdriveInput(false);
     setErrorMsg('');
   };
 
@@ -336,17 +357,37 @@ export const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
                     className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-bold inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-all active:scale-98"
                   >
                     {isCompressing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-                    <span>Upload Foto dari Perangkat</span>
+                    <span>Upload Foto</span>
                   </button>
 
                   <button
                     type="button"
                     disabled={isCompressing}
-                    onClick={() => setShowUrlInput(!showUrlInput)}
+                    onClick={() => {
+                      setShowGdriveInput(!showGdriveInput);
+                      if (!showGdriveInput) setShowUrlInput(false);
+                    }}
+                    className={`px-3 py-2 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer transition-all ${
+                      showGdriveInput
+                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                        : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
+                    }`}
+                  >
+                    <FolderUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Link Google Drive</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isCompressing}
+                    onClick={() => {
+                      setShowUrlInput(!showUrlInput);
+                      if (!showUrlInput) setShowGdriveInput(false);
+                    }}
                     className="px-3 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-100 dark:hover:bg-slate-600 inline-flex items-center gap-1.5 cursor-pointer"
                   >
                     <LinkIcon className="w-3.5 h-3.5" />
-                    <span>Input URL Foto</span>
+                    <span>Input URL</span>
                   </button>
 
                   <button
@@ -355,6 +396,7 @@ export const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
                     onClick={() => {
                       setAvatar(DEFAULT_AVATAR);
                       setUrlInput('');
+                      setGdriveUrl('');
                     }}
                     className="px-2.5 py-2 rounded-xl text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium cursor-pointer"
                     title="Reset ke Foto Bawaan"
@@ -364,10 +406,48 @@ export const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
                 </div>
 
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Foto otomatis dikompresi ringan secara instan agar aplikasi tetap cepat dan anti-blank.
+                  Dapat mengunggah file langsung dari HP/laptop atau menempelkan link sharing Google Drive.
                 </p>
 
-                {/* Collapsible URL Input */}
+                {/* Collapsible Google Drive Input Panel */}
+                {showGdriveInput && (
+                  <div className="pt-2 p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 space-y-2.5 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                        <FolderUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        Ambil Foto dari Google Drive
+                      </span>
+                      <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">
+                        Auto-Format GDrive
+                      </span>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <input
+                        type="url"
+                        value={gdriveUrl}
+                        onChange={(e) => setGdriveUrl(e.target.value)}
+                        placeholder="Tempel link file foto Google Drive: https://drive.google.com/file/d/1A2B3C.../view?usp=sharing"
+                        className="w-full px-3 py-2 rounded-xl border border-emerald-300 dark:border-emerald-700 dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-200 font-mono"
+                      />
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-emerald-800 dark:text-emerald-300">
+                        <span className="leading-tight">
+                          *Pastikan akses file di Google Drive: <strong>"Siapa saja yang memiliki link"</strong>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleApplyGdrive}
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Terapkan Foto GDrive</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Collapsible Standard URL Input */}
                 {showUrlInput && (
                   <div className="pt-2 flex items-center gap-2">
                     <input

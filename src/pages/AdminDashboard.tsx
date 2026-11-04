@@ -35,8 +35,10 @@ import {
   EyeOff,
   AlertCircle,
   User,
-  School
+  School,
+  FolderUp
 } from 'lucide-react';
+import { convertGDriveToDirectImageUrl, extractGDriveFileId, isGDriveUrl } from '../utils/gdrive';
 import { EditTeacherModal } from '../components/EditTeacherModal';
 import { 
   ServiceItem, 
@@ -75,12 +77,17 @@ export const AdminDashboard: React.FC = () => {
     testimonials, setTestimonials,
     partners, setPartners,
     settings, setSettings,
-    mediaList, addMediaItem, deleteMediaItem,
+    mediaList, addMediaItem, updateMediaItem, deleteMediaItem,
     isAdminDarkMode, setIsAdminDarkMode,
     isAdminLoggedIn, loginAdmin, logoutAdmin,
     resetAllData, exportDataJSON, importDataJSON,
     showToast
   } = useApp();
+
+  // Media editing & GDrive states
+  const [editingMedia, setEditingMedia] = useState<{ id: string; name: string; url: string; category: string } | null>(null);
+  const [mediaSourceType, setMediaSourceType] = useState<'gdrive' | 'url'>('gdrive');
+  const [gdriveInputMedia, setGdriveInputMedia] = useState('');
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -166,17 +173,36 @@ export const AdminDashboard: React.FC = () => {
 
   const handleSimulateImageUpload = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMediaName || !newMediaUrl) {
-      showToast('Harap masukkan judul gambar dan URL gambar', 'error');
+    const sourceUrl = mediaSourceType === 'gdrive' ? gdriveInputMedia.trim() : newMediaUrl.trim();
+    if (!newMediaName.trim() || !sourceUrl) {
+      showToast('Harap masukkan judul gambar dan link / URL gambar', 'error');
       return;
     }
+    const finalUrl = convertGDriveToDirectImageUrl(sourceUrl);
     addMediaItem({
-      name: newMediaName,
-      url: newMediaUrl,
+      name: newMediaName.trim(),
+      url: finalUrl,
       category: newMediaCategory
     });
     setNewMediaName('');
     setNewMediaUrl('');
+    setGdriveInputMedia('');
+  };
+
+  const handleUpdateMedia = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingMedia) return;
+    if (!editingMedia.name.trim() || !editingMedia.url.trim()) {
+      showToast('Judul dan URL / Link GDrive foto tidak boleh kosong', 'error');
+      return;
+    }
+    const finalUrl = convertGDriveToDirectImageUrl(editingMedia.url.trim());
+    updateMediaItem({
+      ...editingMedia,
+      name: editingMedia.name.trim(),
+      url: finalUrl
+    });
+    setEditingMedia(null);
   };
 
   // CRUD Handlers for Layanan
@@ -292,7 +318,7 @@ export const AdminDashboard: React.FC = () => {
     { id: 'artikel', label: 'Kelola Artikel & Berita', icon: <FileText className="w-4 h-4" /> },
     { id: 'perangkat', label: 'Kelola Perangkat Ajar', icon: <FolderPlus className="w-4 h-4" /> },
     { id: 'agenda', label: 'Kelola Agenda Kegiatan', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'media', label: 'Media Manager (Upload)', icon: <Layers className="w-4 h-4" /> },
+    { id: 'media', label: 'Media Manager (Upload & GDrive)', icon: <Layers className="w-4 h-4" /> },
     { id: 'seo', label: 'Pengaturan SEO & Meta', icon: <Globe className="w-4 h-4" /> },
     { id: 'pengaturan', label: 'Pengaturan Website', icon: <SettingsIcon className="w-4 h-4" /> },
   ];
@@ -910,14 +936,38 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block font-semibold mb-1">Path / URL Gambar Hero</label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block font-semibold">Path / URL Gambar Banner Hero</label>
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <FolderUp className="w-3.5 h-3.5" />
+                      Mendukung Link Google Drive
+                    </span>
+                  </div>
                   <input
                     type="text"
                     value={hero.heroImage}
-                    onChange={(e) => setHero({ ...hero, heroImage: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const direct = convertGDriveToDirectImageUrl(val);
+                      setHero({ ...hero, heroImage: direct });
+                    }}
+                    placeholder="Masukkan path gambar atau link sharing Google Drive..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs font-mono"
                   />
+                  <p className="text-[11px] text-slate-500">
+                    Bisa berupa URL gambar biasa atau link Google Drive ("Siapa saja yang memiliki link"). Sistem otomatis mengonversinya menjadi URL gambar langsung.
+                  </p>
+                  {hero.heroImage && (
+                    <div className="mt-2 w-48 h-28 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 relative shadow-xs">
+                      <img 
+                        src={hero.heroImage} 
+                        alt="Preview Banner Hero" 
+                        className="w-full h-full object-cover" 
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -1500,112 +1550,277 @@ export const AdminDashboard: React.FC = () => {
 
 
 
-          {/* TAB 11: MEDIA MANAGER (UPLOAD IMAGE) */}
+          {/* TAB 11: MEDIA MANAGER (UPLOAD IMAGE & GDRIVE) */}
           {activeTab === 'media' && (
             <div className={`p-6 sm:p-8 rounded-2xl border ${isAdminDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-8 animate-in fade-in`}>
-              <div className="flex items-center justify-between border-b border-slate-200/50 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800 pb-4">
                 <div>
-                  <h2 className="text-lg font-bold">Media Manager & Dokumentasi Foto</h2>
-                  <p className="text-xs text-slate-500">Unggah foto baru atau kelola arsip gambar kegiatan KKG PJOK.</p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold">Media Manager & Dokumentasi Foto</h2>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                      Google Drive Terintegrasi
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">Unggah foto baru via link Google Drive, salin link foto, atau edit foto arsip kegiatan KKG PJOK.</p>
                 </div>
               </div>
 
-              {/* Upload Form Simulator */}
-              <form onSubmit={handleSimulateImageUpload} className="p-5 rounded-2xl bg-blue-50/60 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 space-y-4 text-xs">
-                <div className="font-bold text-sm text-blue-900 dark:text-blue-300">
-                  Tambah / Upload Foto Baru
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block font-semibold mb-1">Nama / Judul Foto *</label>
-                    <input
-                      type="text"
-                      required
-                      value={newMediaName}
-                      onChange={(e) => setNewMediaName(e.target.value)}
-                      placeholder="Contoh: Latihan Lempar Lembing"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900"
-                    />
+              {/* Upload & Add Form with Source Tabs */}
+              <div className="p-5 rounded-2xl bg-blue-50/60 dark:bg-slate-800/80 border border-blue-200 dark:border-slate-700 space-y-4 text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="font-bold text-sm text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                    <FolderPlus className="w-4 h-4 text-blue-600" />
+                    <span>Tambah Foto Baru</span>
                   </div>
-                  <div>
-                    <label className="block font-semibold mb-1">Kategori Foto</label>
-                    <select
-                      value={newMediaCategory}
-                      onChange={(e) => setNewMediaCategory(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900"
+
+                  {/* Source Toggle */}
+                  <div className="inline-flex rounded-xl p-1 bg-white/80 dark:bg-slate-900 border border-blue-100 dark:border-slate-700 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setMediaSourceType('gdrive')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                        mediaSourceType === 'gdrive'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
                     >
-                      <option value="Hero & Banner">Hero & Banner</option>
-                      <option value="Dokumentasi">Dokumentasi</option>
-                      <option value="Kompetisi">Kompetisi</option>
-                      <option value="Kebugaran">Kebugaran</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1">Path / URL Gambar *</label>
-                    <input
-                      type="text"
-                      required
-                      value={newMediaUrl}
-                      onChange={(e) => setNewMediaUrl(e.target.value)}
-                      placeholder="/src/assets/images/... atau URL"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900"
-                    />
+                      <FolderUp className="w-3.5 h-3.5" />
+                      <span>Link Google Drive (Disarankan)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMediaSourceType('url')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                        mediaSourceType === 'url'
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                      <span>URL / Path Langsung</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-1.5"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Simpan ke Media Manager</span>
-                  </button>
-                </div>
-              </form>
+                {/* GDrive Guidance Callout */}
+                {mediaSourceType === 'gdrive' && (
+                  <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 flex items-start gap-2.5">
+                    <FolderUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="text-[11px] leading-relaxed">
+                      <p className="font-bold mb-0.5">Petunjuk Link Google Drive:</p>
+                      <ol className="list-decimal ml-4 space-y-0.5 text-slate-700 dark:text-emerald-300">
+                        <li>Buka Google Drive &gt; Klik kanan foto &gt; Pilih <strong>Bagikan (Share)</strong>.</li>
+                        <li>Ubah Akses Umum menjadi: <strong>"Siapa saja yang memiliki link"</strong> (Anyone with the link).</li>
+                        <li>Salin link &amp; tempel di kolom link Google Drive di bawah. Sistem otomatis mengonversi ke link foto langsung!</li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleSimulateImageUpload} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block font-semibold mb-1">Nama / Judul Foto *</label>
+                      <input
+                        type="text"
+                        required
+                        value={newMediaName}
+                        onChange={(e) => setNewMediaName(e.target.value)}
+                        placeholder="Contoh: Latihan Lempar Lembing"
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold mb-1">Kategori Foto</label>
+                      <select
+                        value={newMediaCategory}
+                        onChange={(e) => setNewMediaCategory(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900"
+                      >
+                        <option value="Hero & Banner">Hero & Banner</option>
+                        <option value="Dokumentasi">Dokumentasi</option>
+                        <option value="Kompetisi">Kompetisi</option>
+                        <option value="Kebugaran">Kebugaran</option>
+                        <option value="Guru & Pengurus">Guru & Pengurus</option>
+                        <option value="Pelatihan">Pelatihan</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      {mediaSourceType === 'gdrive' ? (
+                        <>
+                          <label className="block font-semibold mb-1 flex items-center justify-between">
+                            <span>Link Google Drive *</span>
+                            {extractGDriveFileId(gdriveInputMedia) && (
+                              <span className="text-[10px] text-emerald-600 font-bold">✓ ID Terdeteksi</span>
+                            )}
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={gdriveInputMedia}
+                            onChange={(e) => setGdriveInputMedia(e.target.value)}
+                            placeholder="https://drive.google.com/file/d/.../view"
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900 font-mono text-[11px]"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <label className="block font-semibold mb-1">Path / URL Gambar *</label>
+                          <input
+                            type="text"
+                            required
+                            value={newMediaUrl}
+                            onChange={(e) => setNewMediaUrl(e.target.value)}
+                            placeholder="https://... atau /src/assets/..."
+                            className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 dark:bg-slate-900 font-mono text-[11px]"
+                          />
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Live Thumbnail Preview for GDrive */}
+                  {mediaSourceType === 'gdrive' && gdriveInputMedia.trim() && (
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-emerald-200 dark:border-emerald-900/60 flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 border border-slate-200 dark:border-slate-700">
+                        <img
+                          src={convertGDriveToDirectImageUrl(gdriveInputMedia)}
+                          alt="Preview GDrive"
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1 min-w-0">
+                        <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Link Google Drive Siap Digunakan</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate font-mono">
+                          Direct URL: {convertGDriveToDirectImageUrl(gdriveInputMedia)}
+                        </div>
+                        <p className="text-[10px] text-slate-400">
+                          Pastikan foto terlihat pada kotak di kiri. Jika kosong, pastikan izin sharing Drive sudah "Siapa saja yang memiliki link".
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2 shadow-xs transition-colors"
+                    >
+                      {mediaSourceType === 'gdrive' ? (
+                        <>
+                          <FolderUp className="w-3.5 h-3.5" />
+                          <span>Simpan Foto dari Google Drive</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Simpan ke Media Manager</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
 
               {/* Media Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {mediaList.map((item) => (
-                  <div
-                    key={item.id}
-                    className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 group relative flex flex-col justify-between"
-                  >
-                    <div className="h-32 bg-slate-900 relative">
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        referrerPolicy="no-referrer"
-                      />
-                      <button
-                        onClick={() => deleteMediaItem(item.id)}
-                        className="absolute top-2 right-2 p-1.5 rounded-md bg-rose-600 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Hapus media"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                    Daftar Foto & Arsip Media ({mediaList.length})
+                  </h3>
+                  <span className="text-[11px] text-slate-400">
+                    Klik "Edit Foto" untuk mengganti link Google Drive foto kapan saja
+                  </span>
+                </div>
 
-                    <div className="p-3 text-xs space-y-1">
-                      <div className="font-bold truncate">{item.name}</div>
-                      <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                        <span>{item.category}</span>
-                        <span>{item.date}</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard?.writeText(item.url);
-                          showToast('Path gambar disalin ke clipboard!', 'success');
-                        }}
-                        className="w-full mt-1 py-1 rounded-md bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-100 hover:text-blue-800 transition-colors"
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {mediaList.map((item) => {
+                    const isGdrive = isGDriveUrl(item.url) || item.url.includes('googleusercontent.com');
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 group relative flex flex-col justify-between shadow-xs hover:shadow-md transition-shadow"
                       >
-                        Salin Path Gambar
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                        <div className="h-40 bg-slate-900 relative overflow-hidden">
+                          <img
+                            src={item.url}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            referrerPolicy="no-referrer"
+                          />
+
+                          {/* GDrive Tag */}
+                          {isGdrive && (
+                            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-emerald-600/90 backdrop-blur-xs text-white text-[10px] font-bold flex items-center gap-1 shadow-xs">
+                              <FolderUp className="w-2.5 h-2.5" />
+                              <span>GDrive</span>
+                            </span>
+                          )}
+
+                          {/* Action overlay buttons */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => setEditingMedia(item)}
+                              className="p-1.5 rounded-lg bg-white/90 hover:bg-white text-blue-700 shadow-md backdrop-blur-xs transition-transform active:scale-95"
+                              title="Edit Foto & Sumber GDrive"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Hapus foto "${item.name}" dari Media Manager?`)) {
+                                  deleteMediaItem(item.id);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg bg-rose-600/90 hover:bg-rose-600 text-white shadow-md backdrop-blur-xs transition-transform active:scale-95"
+                              title="Hapus media"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 text-xs space-y-2">
+                          <div className="font-bold text-slate-800 dark:text-slate-100 truncate" title={item.name}>
+                            {item.name}
+                          </div>
+                          <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 font-medium">{item.category}</span>
+                            <span>{item.date}</span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-1.5 pt-1">
+                            <button
+                              onClick={() => setEditingMedia(item)}
+                              className="py-1.5 px-2 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[10px] font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 flex items-center justify-center gap-1 transition-colors"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>Edit Foto</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard?.writeText(item.url);
+                                showToast('Link gambar disalin ke clipboard!', 'success');
+                              }}
+                              className="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-[10px] font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 flex items-center justify-center gap-1 transition-colors"
+                            >
+                              <span>Salin Link</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -2308,6 +2523,134 @@ export const AdminDashboard: React.FC = () => {
               </button>
               <button type="submit" className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold">
                 Simpan Agenda
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* EDIT MODAL: FOTO & MEDIA (GOOGLE DRIVE) */}
+      {editingMedia && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
+          <form
+            onSubmit={handleUpdateMedia}
+            className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 sm:p-7 space-y-4 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto text-xs"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <FolderUp className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Edit Foto & Sumber Google Drive
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingMedia(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3.5">
+              <div>
+                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                  Judul / Nama Foto *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingMedia.name}
+                  onChange={(e) => setEditingMedia({ ...editingMedia, name: e.target.value })}
+                  placeholder="Contoh: Dokumentasi Senam Kesegaran Jasmani"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
+                  Kategori Foto
+                </label>
+                <select
+                  value={editingMedia.category}
+                  onChange={(e) => setEditingMedia({ ...editingMedia, category: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Hero & Banner">Hero & Banner</option>
+                  <option value="Dokumentasi">Dokumentasi</option>
+                  <option value="Kompetisi">Kompetisi</option>
+                  <option value="Kebugaran">Kebugaran</option>
+                  <option value="Guru & Pengurus">Guru & Pengurus</option>
+                  <option value="Pelatihan">Pelatihan</option>
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300">
+                    Link Foto / Link Google Drive *
+                  </label>
+                  {extractGDriveFileId(editingMedia.url) && (
+                    <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      ID GDrive Terdeteksi
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  required
+                  value={editingMedia.url}
+                  onChange={(e) => setEditingMedia({ ...editingMedia, url: e.target.value })}
+                  placeholder="Tempel link Google Drive atau URL gambar"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 font-mono text-[11px] focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Bisa tempel link Google Drive apa pun (contoh: <code className="text-blue-500">drive.google.com/file/d/.../view</code>). Sistem otomatis mengonversinya ke URL gambar langsung.
+                </p>
+              </div>
+
+              {/* Live Image Preview */}
+              {editingMedia.url && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/60">
+                  <div className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-2 flex items-center justify-between">
+                    <span>Pratinjau Foto Langsung:</span>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {isGDriveUrl(editingMedia.url) || editingMedia.url.includes('googleusercontent.com') ? 'Google Drive Source' : 'Web URL'}
+                    </span>
+                  </div>
+                  <div className="h-44 w-full rounded-lg overflow-hidden bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                    <img
+                      src={convertGDriveToDirectImageUrl(editingMedia.url)}
+                      alt="Preview Foto"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1.5 text-center">
+                    Jika foto tidak muncul, pastikan pengaturan berbagi di Google Drive adalah "Siapa saja yang memiliki link".
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setEditingMedia(null)}
+                className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center gap-2 shadow-xs transition-colors"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>Simpan Perubahan Foto</span>
               </button>
             </div>
           </form>

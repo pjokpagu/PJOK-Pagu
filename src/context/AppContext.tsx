@@ -61,6 +61,7 @@ interface AppContextType {
   // Media manager state (uploaded or selected local images)
   mediaList: Array<{ id: string; name: string; url: string; date: string; category: string }>;
   addMediaItem: (item: { name: string; url: string; category: string }) => void;
+  updateMediaItem: (item: { id: string; name: string; url: string; category: string }) => void;
   deleteMediaItem: (id: string) => void;
 
   // Search and notification state
@@ -524,6 +525,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Foto telah dihapus dari Media Manager', 'info');
   };
 
+  const updateMediaItem = (item: { id: string; name: string; url: string; category: string }) => {
+    setMediaList(prev => prev.map(m => m.id === item.id ? { ...m, ...item } : m));
+    showToast('Foto berhasil diperbarui!', 'success');
+  };
+
   const resetAllData = () => {
     setHero(initialHero);
     setPartners(initialPartners);
@@ -644,6 +650,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSettings,
         mediaList,
         addMediaItem,
+        updateMediaItem,
         deleteMediaItem,
         globalSearchQuery,
         setGlobalSearchQuery,
