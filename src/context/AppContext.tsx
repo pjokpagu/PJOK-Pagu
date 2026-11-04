@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { subscribeToCloudDoc, saveToCloudDoc } from '../lib/firebase';
+import { subscribeToCloudDoc, saveToCloudDoc, isSupabaseConfigured } from '../lib/supabase';
 import {
   NavPage,
   HeroData,
@@ -273,10 +273,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Reference flags to prevent cyclic echo loops when receiving Firestore cloud updates
+  // Reference flags to prevent cyclic echo loops when receiving Supabase cloud updates
   const remoteUpdateFlags = useRef<{ [key: string]: boolean }>({});
   const isInitialMount = useRef<boolean>(true);
-  const [isCloudActive, setIsCloudActive] = useState<boolean>(true);
+  const [isCloudActive] = useState<boolean>(() => isSupabaseConfigured());
 
   // Set up Real-time Cloud Listeners across all devices (Laptop, HP, Tablet, Visitors)
   useEffect(() => {

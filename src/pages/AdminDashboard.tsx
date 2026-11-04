@@ -36,8 +36,10 @@ import {
   AlertCircle,
   User,
   School,
-  FolderUp
+  FolderUp,
+  Database
 } from 'lucide-react';
+import { getSupabaseConfig, setSupabaseConfig, isSupabaseConfigured } from '../lib/supabase';
 import { convertGDriveToDirectImageUrl, extractGDriveFileId, isGDriveUrl } from '../utils/gdrive';
 import { EditTeacherModal } from '../components/EditTeacherModal';
 import { 
@@ -89,6 +91,61 @@ export const AdminDashboard: React.FC = () => {
   const [mediaSourceType, setMediaSourceType] = useState<'gdrive' | 'url'>('gdrive');
   const [gdriveInputMedia, setGdriveInputMedia] = useState('');
   const [heroBannerTab, setHeroBannerTab] = useState<'beranda' | 'pengurus' | 'program' | 'perangkat'>('beranda');
+
+  // Supabase Database Connection states
+  const [supabaseConfig, setSupabaseState] = useState(() => getSupabaseConfig());
+  const [isSupabaseConnected, setIsSupabaseConnected] = useState(() => isSupabaseConfigured());
+  const [isTestingSupabase, setIsTestingSupabase] = useState(false);
+  const [supabaseCopySuccess, setSupabaseCopySuccess] = useState(false);
+
+  const handleSaveSupabaseConfig = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsTestingSupabase(true);
+    try {
+      setSupabaseConfig(supabaseConfig.url, supabaseConfig.key);
+      const isNowConfigured = isSupabaseConfigured();
+      setIsSupabaseConnected(isNowConfigured);
+      showToast(
+        isNowConfigured 
+          ? 'Koneksi Supabase berhasil disimpan! Database tersinkronisasi realtime.' 
+          : 'Pengaturan Supabase disimpan.', 
+        'success'
+      );
+    } catch (err: any) {
+      showToast('Gagal menyimpan konfigurasi: ' + err.message, 'error');
+    } finally {
+      setIsTestingSupabase(false);
+    }
+  };
+
+  const handleCopySupabaseSchema = () => {
+    const sqlContent = `-- ==============================================================================
+-- SCHEMA DATABASE SUPABASE UNTUK PORTAL KKG PJOK SD KECAMATAN PAGU
+-- ==============================================================================
+create table if not exists public.kkg_data (
+  id text primary key,
+  data jsonb default '{}'::jsonb,
+  items jsonb default '[]'::jsonb,
+  last_updated timestamptz default timezone('utc'::text, now()) not null
+);
+
+alter table public.kkg_data enable row level security;
+
+create policy "Izinkan akses baca publik untuk kkg_data"
+  on public.kkg_data for select using (true);
+
+create policy "Izinkan akses tulis publik untuk kkg_data"
+  on public.kkg_data for insert with check (true);
+
+create policy "Izinkan akses update publik untuk kkg_data"
+  on public.kkg_data for update using (true) with check (true);
+
+alter publication supabase_realtime add table public.kkg_data;`;
+    navigator.clipboard.writeText(sqlContent);
+    setSupabaseCopySuccess(true);
+    showToast('Skrip SQL schema Supabase berhasil disalin!', 'success');
+    setTimeout(() => setSupabaseCopySuccess(false), 3000);
+  };
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -454,8 +511,8 @@ export const AdminDashboard: React.FC = () => {
                 <div>
                   <div className="font-extrabold text-sm tracking-tight">Admin KKG PJOK</div>
                   <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Cloud Sync Aktif</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
+                    <span>{isSupabaseConnected ? 'Supabase Realtime Aktif' : 'Database Supabase'}</span>
                   </div>
                 </div>
               </div>
@@ -570,7 +627,10 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                     <div>
                       <div className="font-extrabold text-xs tracking-tight">Admin KKG PJOK</div>
-                      <div className="text-[10px] text-slate-400">Pagu, Kab. Kediri</div>
+                      <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
+                        <span>{isSupabaseConnected ? 'Supabase Realtime' : 'Database Supabase'}</span>
+                      </div>
                     </div>
                   </div>
                   <button
@@ -2458,11 +2518,130 @@ export const AdminDashboard: React.FC = () => {
 
                 <button
                   onClick={() => showToast('Pengaturan umum berhasil disimpan!', 'success')}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2"
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm hover:shadow"
                 >
                   <Save className="w-4 h-4" />
                   <span>Simpan Semua Pengaturan</span>
                 </button>
+              </div>
+
+              {/* CARD INTEGRASI DATABASE SUPABASE */}
+              <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800 space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                      <Database className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>Database Supabase Cloud</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                          PostgreSQL & Realtime
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Sinkronisasi data otomatis lintas perangkat (Laptop, HP, Tablet) secara realtime.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status indicator badge */}
+                  <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold border ${
+                    isSupabaseConnected 
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300' 
+                      : 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300'
+                  }`}>
+                    <span className={`w-2 h-2 rounded-full ${isSupabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                    <span>{isSupabaseConnected ? 'Supabase Terhubung (Aktif)' : 'Mode Lokal (Siap Hubungkan)'}</span>
+                  </div>
+                </div>
+
+                {/* Form Konfigurasi Supabase */}
+                <form onSubmit={handleSaveSupabaseConfig} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Supabase Project URL
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://your-project-id.supabase.co"
+                      value={supabaseConfig.url}
+                      onChange={(e) => setSupabaseState({ ...supabaseConfig, url: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 font-mono"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Ditemukan di Supabase Dashboard &gt; Project Settings &gt; API &gt; Project URL
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Supabase Anon Public API Key
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                      value={supabaseConfig.key}
+                      onChange={(e) => setSupabaseState({ ...supabaseConfig, key: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 font-mono"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Kunci akses publik anon (aman digunakan di browser client-side).
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="submit"
+                      disabled={isTestingSupabase}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50 transition-all"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{isTestingSupabase ? 'Menghubungkan...' : 'Simpan & Terapkan Supabase'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCopySupabaseSchema}
+                      className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 font-bold text-xs inline-flex items-center gap-2 cursor-pointer transition-all"
+                    >
+                      {supabaseCopySuccess ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span className="text-emerald-600">Skrip SQL Berhasil Disalin!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Database className="w-4 h-4 text-blue-600" />
+                          <span>Salin Skrip SQL Schema Supabase</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href="https://supabase.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-white text-xs font-semibold inline-flex items-center gap-1.5"
+                    >
+                      <span>Buka Supabase.com</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </form>
+
+                {/* Panduan Singkat */}
+                <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/80 dark:border-blue-900/50 text-xs space-y-2 text-slate-700 dark:text-slate-300">
+                  <div className="font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                    <span>Cara Menghubungkan Supabase Dalam 3 Langkah:</span>
+                  </div>
+                  <ol className="list-decimal list-inside space-y-1 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400 pl-1">
+                    <li>Buat akun dan project baru gratis di <strong>supabase.com</strong>.</li>
+                    <li>Buka menu <strong>SQL Editor</strong> di Supabase, klik tombol <em>"Salin Skrip SQL Schema Supabase"</em> di atas, lalu tempel (paste) dan klik <strong>Run</strong>.</li>
+                    <li>Buka <strong>Project Settings &gt; API</strong>, salin <em>Project URL</em> dan <em>anon public key</em> ke form di atas, lalu klik <strong>Simpan &amp; Terapkan Supabase</strong>.</li>
+                  </ol>
+                </div>
               </div>
             </div>
           )}
