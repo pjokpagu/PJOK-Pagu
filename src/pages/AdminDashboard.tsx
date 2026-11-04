@@ -83,7 +83,8 @@ export const AdminDashboard: React.FC = () => {
     isAdminDarkMode, setIsAdminDarkMode,
     isAdminLoggedIn, loginAdmin, logoutAdmin,
     resetAllData, exportDataJSON, importDataJSON,
-    showToast
+    showToast,
+    saveToCloud
   } = useApp();
 
   // Media editing & GDrive states
@@ -190,19 +191,25 @@ alter publication supabase_realtime add table public.kkg_data;`;
   const [teacherRoleTab, setTeacherRoleTab] = useState<'Semua' | 'Pendamping' | 'Pengurus' | 'Anggota'>('Semua');
 
   const handleSaveTeacher = (updatedTeacher: TeacherProfile) => {
+    let updatedList: TeacherProfile[];
     if (isNewTeacher) {
-      setTeachers(prev => [updatedTeacher, ...prev]);
+      updatedList = [updatedTeacher, ...teachers];
+      setTeachers(updatedList);
       showToast(`Data "${updatedTeacher.name}" berhasil ditambahkan!`, 'success');
     } else {
-      setTeachers(prev => prev.map(t => t.id === updatedTeacher.id ? updatedTeacher : t));
+      updatedList = teachers.map(t => t.id === updatedTeacher.id ? updatedTeacher : t);
+      setTeachers(updatedList);
       showToast(`Data "${updatedTeacher.name}" berhasil diperbarui!`, 'success');
     }
+    saveToCloud('teachers', { items: updatedList });
     setEditingTeacher(null);
     setIsNewTeacher(false);
   };
 
   const handleDeleteTeacher = (id: string) => {
-    setTeachers(prev => prev.filter(t => t.id !== id));
+    const updatedList = teachers.filter(t => t.id !== id);
+    setTeachers(updatedList);
+    saveToCloud('teachers', { items: updatedList });
     showToast('Data guru/pengurus telah dihapus', 'info');
     setEditingTeacher(null);
     setIsNewTeacher(false);
@@ -267,19 +274,25 @@ alter publication supabase_realtime add table public.kkg_data;`;
   const handleSaveService = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingService) return;
+    let updatedServices: ServiceItem[];
     if (isNewService) {
-      setServices(prev => [editingService, ...prev]);
+      updatedServices = [editingService, ...services];
+      setServices(updatedServices);
       showToast('Layanan baru berhasil ditambahkan!', 'success');
     } else {
-      setServices(prev => prev.map(s => s.id === editingService.id ? editingService : s));
+      updatedServices = services.map(s => s.id === editingService.id ? editingService : s);
+      setServices(updatedServices);
       showToast('Perubahan layanan berhasil disimpan!', 'success');
     }
+    saveToCloud('services', { items: updatedServices });
     setEditingService(null);
   };
 
   const handleDeleteService = (id: string) => {
     if (confirm('Yakin ingin menghapus layanan ini?')) {
-      setServices(prev => prev.filter(s => s.id !== id));
+      const updatedServices = services.filter(s => s.id !== id);
+      setServices(updatedServices);
+      saveToCloud('services', { items: updatedServices });
       showToast('Layanan telah dihapus', 'info');
     }
   };
@@ -292,19 +305,25 @@ alter publication supabase_realtime add table public.kkg_data;`;
       ...editingProgram,
       image: convertGDriveToDirectImageUrl(editingProgram.image || '')
     };
+    let updatedPrograms: ProgramKKG[];
     if (isNewProgram) {
-      setPrograms(prev => [finalProgram, ...prev]);
+      updatedPrograms = [finalProgram, ...programs];
+      setPrograms(updatedPrograms);
       showToast('Program kerja baru berhasil ditambahkan!', 'success');
     } else {
-      setPrograms(prev => prev.map(p => p.id === finalProgram.id ? finalProgram : p));
+      updatedPrograms = programs.map(p => p.id === finalProgram.id ? finalProgram : p);
+      setPrograms(updatedPrograms);
       showToast('Program kerja berhasil diperbarui!', 'success');
     }
+    saveToCloud('programs', { items: updatedPrograms });
     setEditingProgram(null);
   };
 
   const handleDeleteProgram = (id: string) => {
     if (confirm('Yakin ingin menghapus program ini?')) {
-      setPrograms(prev => prev.filter(p => p.id !== id));
+      const updatedPrograms = programs.filter(p => p.id !== id);
+      setPrograms(updatedPrograms);
+      saveToCloud('programs', { items: updatedPrograms });
       showToast('Program kerja telah dihapus', 'info');
     }
   };
@@ -317,19 +336,25 @@ alter publication supabase_realtime add table public.kkg_data;`;
       ...editingArticle,
       thumbnail: convertGDriveToDirectImageUrl(editingArticle.thumbnail || '')
     };
+    let updatedArticles: ArticleInfo[];
     if (isNewArticle) {
-      setArticles(prev => [finalArticle, ...prev]);
+      updatedArticles = [finalArticle, ...articles];
+      setArticles(updatedArticles);
       showToast('Artikel baru berhasil diterbitkan!', 'success');
     } else {
-      setArticles(prev => prev.map(a => a.id === finalArticle.id ? finalArticle : a));
+      updatedArticles = articles.map(a => a.id === finalArticle.id ? finalArticle : a);
+      setArticles(updatedArticles);
       showToast('Artikel berhasil diperbarui!', 'success');
     }
+    saveToCloud('articles', { items: updatedArticles });
     setEditingArticle(null);
   };
 
   const handleDeleteArticle = (id: string) => {
     if (confirm('Yakin ingin menghapus artikel ini?')) {
-      setArticles(prev => prev.filter(a => a.id !== id));
+      const updatedArticles = articles.filter(a => a.id !== id);
+      setArticles(updatedArticles);
+      saveToCloud('articles', { items: updatedArticles });
       showToast('Artikel telah dihapus', 'info');
     }
   };
@@ -342,19 +367,25 @@ alter publication supabase_realtime add table public.kkg_data;`;
       ...editingMaterial,
       thumbnail: convertGDriveToDirectImageUrl(editingMaterial.thumbnail || '')
     };
+    let updatedMaterials: LearningMaterial[];
     if (isNewMaterial) {
-      setMaterials(prev => [finalMaterial, ...prev]);
+      updatedMaterials = [finalMaterial, ...materials];
+      setMaterials(updatedMaterials);
       showToast('Perangkat ajar baru berhasil diunggah!', 'success');
     } else {
-      setMaterials(prev => prev.map(m => m.id === finalMaterial.id ? finalMaterial : m));
+      updatedMaterials = materials.map(m => m.id === finalMaterial.id ? finalMaterial : m);
+      setMaterials(updatedMaterials);
       showToast('Perangkat ajar berhasil diperbarui!', 'success');
     }
+    saveToCloud('materials', { items: updatedMaterials });
     setEditingMaterial(null);
   };
 
   const handleDeleteMaterial = (id: string) => {
     if (confirm('Yakin ingin menghapus perangkat ajar ini?')) {
-      setMaterials(prev => prev.filter(m => m.id !== id));
+      const updatedMaterials = materials.filter(m => m.id !== id);
+      setMaterials(updatedMaterials);
+      saveToCloud('materials', { items: updatedMaterials });
       showToast('Perangkat ajar telah dihapus', 'info');
     }
   };
@@ -363,19 +394,25 @@ alter publication supabase_realtime add table public.kkg_data;`;
   const handleSaveAgenda = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingAgenda) return;
+    let updatedAgenda: AgendaItem[];
     if (isNewAgenda) {
-      setAgenda(prev => [editingAgenda, ...prev]);
+      updatedAgenda = [editingAgenda, ...agenda];
+      setAgenda(updatedAgenda);
       showToast('Agenda baru berhasil dijadwalkan!', 'success');
     } else {
-      setAgenda(prev => prev.map(a => a.id === editingAgenda.id ? editingAgenda : a));
+      updatedAgenda = agenda.map(a => a.id === editingAgenda.id ? editingAgenda : a);
+      setAgenda(updatedAgenda);
       showToast('Agenda berhasil diperbarui!', 'success');
     }
+    saveToCloud('agenda', { items: updatedAgenda });
     setEditingAgenda(null);
   };
 
   const handleDeleteAgenda = (id: string) => {
     if (confirm('Yakin ingin menghapus agenda ini?')) {
-      setAgenda(prev => prev.filter(a => a.id !== id));
+      const updatedAgenda = agenda.filter(a => a.id !== id);
+      setAgenda(updatedAgenda);
+      saveToCloud('agenda', { items: updatedAgenda });
       showToast('Agenda telah dihapus', 'info');
     }
   };
@@ -511,8 +548,8 @@ alter publication supabase_realtime add table public.kkg_data;`;
                 <div>
                   <div className="font-extrabold text-sm tracking-tight">Admin KKG PJOK</div>
                   <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
-                    <span>{isSupabaseConnected ? 'Supabase Realtime Aktif' : 'Database Supabase'}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Cloud Realtime Aktif</span>
                   </div>
                 </div>
               </div>
@@ -628,8 +665,8 @@ alter publication supabase_realtime add table public.kkg_data;`;
                     <div>
                       <div className="font-extrabold text-xs tracking-tight">Admin KKG PJOK</div>
                       <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`} />
-                        <span>{isSupabaseConnected ? 'Supabase Realtime' : 'Database Supabase'}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Cloud Realtime Aktif</span>
                       </div>
                     </div>
                   </div>
@@ -1443,7 +1480,8 @@ alter publication supabase_realtime add table public.kkg_data;`;
                 <button
                   type="button"
                   onClick={() => {
-                    showToast('Pengaturan Hero & Banner Website berhasil disimpan & disinkronisasi ke website!', 'success');
+                    saveToCloud('hero', { data: hero });
+                    showToast('Pengaturan Hero & Banner Website berhasil disimpan & disinkronisasi ke cloud!', 'success');
                   }}
                   className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
@@ -2517,7 +2555,10 @@ alter publication supabase_realtime add table public.kkg_data;`;
                 </div>
 
                 <button
-                  onClick={() => showToast('Pengaturan umum berhasil disimpan!', 'success')}
+                  onClick={() => {
+                    saveToCloud('settings', { data: settings });
+                    showToast('Pengaturan umum berhasil disimpan & disinkronisasi ke cloud!', 'success');
+                  }}
                   className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2 cursor-pointer shadow-sm hover:shadow"
                 >
                   <Save className="w-4 h-4" />

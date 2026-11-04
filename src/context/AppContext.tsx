@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { subscribeToCloudDoc, saveToCloudDoc, isSupabaseConfigured } from '../lib/supabase';
+import { subscribeToCloudDoc, saveToCloudDoc } from '../lib/cloudSync';
 import {
   NavPage,
   HeroData,
@@ -85,6 +85,7 @@ interface AppContextType {
   exportDataJSON: () => void;
   importDataJSON: (jsonString: string) => boolean;
   isCloudActive: boolean;
+  saveToCloud: (docName: string, payload: any) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -273,10 +274,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Reference flags to prevent cyclic echo loops when receiving Supabase cloud updates
+  // Reference flags to prevent cyclic echo loops when receiving cloud updates
   const remoteUpdateFlags = useRef<{ [key: string]: boolean }>({});
   const isInitialMount = useRef<boolean>(true);
-  const [isCloudActive] = useState<boolean>(() => isSupabaseConfigured());
+  const [isCloudActive] = useState<boolean>(true);
 
   // Set up Real-time Cloud Listeners across all devices (Laptop, HP, Tablet, Visitors)
   useEffect(() => {
@@ -361,10 +362,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     });
 
+    // 10. Partners Real-time Cloud Sync
+    const unsubPartners = subscribeToCloudDoc('partners', (data) => {
+      if (Array.isArray(data?.items)) {
+        remoteUpdateFlags.current['partners'] = true;
+        setPartners(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'partners', JSON.stringify(data.items));
+      }
+    });
+
+    // 11. Services Real-time Cloud Sync
+    const unsubServices = subscribeToCloudDoc('services', (data) => {
+      if (Array.isArray(data?.items)) {
+        remoteUpdateFlags.current['services'] = true;
+        setServices(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'services', JSON.stringify(data.items));
+      }
+    });
+
+    // 12. Testimonials Real-time Cloud Sync
+    const unsubTestimonials = subscribeToCloudDoc('testimonials', (data) => {
+      if (Array.isArray(data?.items)) {
+        remoteUpdateFlags.current['testimonials'] = true;
+        setTestimonials(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'testimonials', JSON.stringify(data.items));
+      }
+    });
+
     // Mark initial mount as complete after a small delay to avoid overwriting cloud with default initial data
     const timer = setTimeout(() => {
       isInitialMount.current = false;
-    }, 1500);
+    }, 1200);
 
     return () => {
       clearTimeout(timer);
@@ -377,6 +405,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubHero();
       unsubSettings();
       unsubMedia();
+      unsubPartners();
+      unsubServices();
+      unsubTestimonials();
     };
   }, []);
 
@@ -394,6 +425,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'partners', JSON.stringify(partners));
+    if (remoteUpdateFlags.current['partners']) {
+      remoteUpdateFlags.current['partners'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('partners', { items: partners });
+    }
   }, [partners]);
 
   useEffect(() => {
@@ -409,6 +447,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'services', JSON.stringify(services));
+    if (remoteUpdateFlags.current['services']) {
+      remoteUpdateFlags.current['services'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('services', { items: services });
+    }
   }, [services]);
 
   useEffect(() => {
@@ -468,6 +513,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'testimonials', JSON.stringify(testimonials));
+    if (remoteUpdateFlags.current['testimonials']) {
+      remoteUpdateFlags.current['testimonials'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('testimonials', { items: testimonials });
+    }
   }, [testimonials]);
 
   useEffect(() => {
@@ -521,17 +573,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
       category: item.category
     };
-    setMediaList(prev => [newItem, ...prev]);
+    const updated = [newItem, ...mediaList];
+    setMediaList(updated);
+    saveToCloudDoc('media', { items: updated });
     showToast('Foto berhasil ditambahkan ke Media Manager!', 'success');
   };
 
   const deleteMediaItem = (id: string) => {
-    setMediaList(prev => prev.filter(m => m.id !== id));
+    const updated = mediaList.filter(m => m.id !== id);
+    setMediaList(updated);
+    saveToCloudDoc('media', { items: updated });
     showToast('Foto telah dihapus dari Media Manager', 'info');
   };
 
   const updateMediaItem = (item: { id: string; name: string; url: string; category: string }) => {
-    setMediaList(prev => prev.map(m => m.id === item.id ? { ...m, ...item } : m));
+    const updated = mediaList.map(m => m.id === item.id ? { ...m, ...item } : m);
+    setMediaList(updated);
+    saveToCloudDoc('media', { items: updated });
     showToast('Foto berhasil diperbarui!', 'success');
   };
 
@@ -671,7 +729,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         resetAllData,
         exportDataJSON,
         importDataJSON,
-        isCloudActive
+        isCloudActive,
+        saveToCloud: saveToCloudDoc
       }}
     >
       {children}
