@@ -8,7 +8,7 @@ import {
 import { LearningMaterial } from '../types';
 
 export const MaterialsPage: React.FC = () => {
-  const { materials, showToast } = useApp();
+  const { materials, hero, showToast } = useApp();
   const [selectedGrade, setSelectedGrade] = useState<string>('Semua Kelas');
 
   const grades = ['Semua Kelas', 'Kelas 1', 'Kelas 2', 'Kelas 3', 'Kelas 4', 'Kelas 5', 'Kelas 6'];
@@ -27,17 +27,34 @@ export const MaterialsPage: React.FC = () => {
       {/* Breadcrumb */}
       <Breadcrumb items={[{ label: 'Perangkat Pembelajaran', active: true }]} />
 
-      {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">
-          Bank Kurikulum & Modul Ajar
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Perangkat Ajar PJOK SD Kurikulum Merdeka
-        </h1>
-        <p className="text-sm sm:text-base text-slate-600">
-          Bank perangkat ajar gratis dan resmi yang disusun oleh guru-guru PJOK se-Kecamatan Pagu. Siap diadaptasi untuk Fase A, B, dan C.
-        </p>
+      {/* Dynamic Hero Banner connected to Admin & Google Drive */}
+      <div className="p-6 sm:p-10 rounded-3xl text-white shadow-2xl relative overflow-hidden border border-slate-800 bg-slate-950 group">
+        {(hero.perangkatHeroImage || './assets/images/gymnastics_field_pagu_1793250247785.jpg') && (
+          <div className="absolute inset-0 z-0">
+            <img
+              src={hero.perangkatHeroImage || './assets/images/gymnastics_field_pagu_1793250247785.jpg'}
+              alt={hero.perangkatTitle || "Perangkat Pembelajaran"}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-40 mix-blend-luminosity filter blur-[0.5px]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-rose-950/70" />
+          </div>
+        )}
+        
+        <div className="relative z-10 space-y-4 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-rose-200 backdrop-blur-md border border-white/15 shadow-xs">
+            <FileText className="w-3.5 h-3.5 text-rose-300" />
+            <span>{hero.perangkatBadge || 'Bank Kurikulum & Modul Ajar'}</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase drop-shadow-sm">
+            {hero.perangkatTitle || 'Perangkat Ajar PJOK SD Kurikulum Merdeka'}
+          </h1>
+
+          <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed drop-shadow-xs">
+            {hero.perangkatDescription || 'Bank perangkat ajar gratis dan resmi yang disusun oleh guru-guru PJOK se-Kecamatan Pagu. Siap diadaptasi untuk Fase A, B, dan C.'}
+          </p>
+        </div>
       </div>
 
       {/* Filter by Grade (Kelas 1 - 6) */}

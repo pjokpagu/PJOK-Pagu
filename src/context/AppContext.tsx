@@ -121,7 +121,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [hero, setHero] = useState<HeroData>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PREFIX + 'hero');
-    if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    if (saved) { 
+      try { 
+        const parsed = JSON.parse(saved);
+        return { ...initialHero, ...parsed };
+      } catch (e) {} 
+    }
     return initialHero;
   });
 
@@ -333,8 +338,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubHero = subscribeToCloudDoc('hero', (data) => {
       if (data?.data && typeof data.data === 'object') {
         remoteUpdateFlags.current['hero'] = true;
-        setHero(data.data);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify(data.data));
+        setHero(prev => ({ ...initialHero, ...prev, ...data.data }));
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify({ ...initialHero, ...data.data }));
       }
     });
 

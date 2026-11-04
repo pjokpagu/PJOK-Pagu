@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 export const AboutPage: React.FC = () => {
-  const { teachers } = useApp();
+  const { teachers, hero } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('Semua');
@@ -53,6 +53,8 @@ export const AboutPage: React.FC = () => {
     return matchesSearch && matchesRole && matchesGender;
   });
 
+  const bannerImg = hero.pengurusHeroImage || './assets/images/kkg_teachers_meeting_1793250246883.jpg';
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16">
       
@@ -60,34 +62,45 @@ export const AboutPage: React.FC = () => {
       <div className="space-y-4">
         <Breadcrumb items={[{ label: 'Pengurus & Anggota KKG', active: true }]} />
 
-        {/* Informative Header Banner */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white shadow-xl relative overflow-hidden border border-slate-800">
-          <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Informative Header Banner connected to Admin & Google Drive */}
+        <div className="p-6 sm:p-10 rounded-3xl text-white shadow-2xl relative overflow-hidden border border-slate-800 bg-slate-950 group">
+          {/* Background Photo from GDrive or local */}
+          {bannerImg && (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={bannerImg}
+                alt={hero.pengurusTitle || "Banner Pengurus KKG"}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-40 mix-blend-luminosity filter blur-[0.5px]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-indigo-950/70" />
+            </div>
+          )}
           
-          <div className="relative z-10 space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-blue-200 backdrop-blur-md border border-white/10">
+          <div className="relative z-10 space-y-4 max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-blue-200 backdrop-blur-md border border-white/15 shadow-xs">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
-              <span>Struktur Organisasi Resmi KKG PJOK SD Kecamatan Pagu</span>
+              <span>{hero.pengurusBadge || 'Struktur Organisasi Resmi KKG PJOK SD Kecamatan Pagu'}</span>
             </div>
             
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-white uppercase">
-              Susunan Pengurus & Keanggotaan
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase drop-shadow-sm">
+              {hero.pengurusTitle || 'Susunan Pengurus & Keanggotaan'}
             </h1>
             
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-              Wadah silaturahmi, kolaborasi, dan pengembangan keprofesian berkelanjutan guru Pendidikan Jasmani, Olahraga, dan Kesehatan tingkat Sekolah Dasar se-Kecamatan Pagu, Kabupaten Kediri.
+            <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed drop-shadow-xs">
+              {hero.pengurusDescription || 'Wadah silaturahmi, kolaborasi, dan pengembangan keprofesian berkelanjutan guru Pendidikan Jasmani, Olahraga, dan Kesehatan tingkat Sekolah Dasar se-Kecamatan Pagu, Kabupaten Kediri.'}
             </p>
 
             <div className="pt-2 flex items-center gap-3 sm:gap-6 flex-wrap text-xs">
-              <div className="flex items-center gap-1.5 font-bold px-3 py-1 rounded-xl bg-purple-500/20 text-purple-200 border border-purple-400/30">
+              <div className="flex items-center gap-1.5 font-bold px-3 py-1.5 rounded-xl bg-purple-500/25 text-purple-200 border border-purple-400/30 backdrop-blur-xs">
                 <Award className="w-4 h-4 text-purple-300" />
                 <span>Tim Pendamping ({pendamping.length})</span>
               </div>
-              <div className="flex items-center gap-1.5 font-bold px-3 py-1 rounded-xl bg-blue-500/20 text-blue-200 border border-blue-400/30">
+              <div className="flex items-center gap-1.5 font-bold px-3 py-1.5 rounded-xl bg-blue-500/25 text-blue-200 border border-blue-400/30 backdrop-blur-xs">
                 <Users className="w-4 h-4 text-blue-300" />
                 <span>Tim Pengurus Harian ({pengurusInti.length})</span>
               </div>
-              <div className="flex items-center gap-1.5 font-bold px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+              <div className="flex items-center gap-1.5 font-bold px-3 py-1.5 rounded-xl bg-emerald-500/25 text-emerald-200 border border-emerald-400/30 backdrop-blur-xs">
                 <BookOpen className="w-4 h-4 text-emerald-300" />
                 <span>Tim Anggota Guru ({teachers.filter(t => t.role === 'Anggota').length})</span>
               </div>

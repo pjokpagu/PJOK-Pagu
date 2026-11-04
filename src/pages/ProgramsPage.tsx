@@ -6,11 +6,12 @@ import {
   Search, 
   FolderDown, 
   ArrowLeft, 
-  ChevronRight
+  ChevronRight,
+  Trophy
 } from 'lucide-react';
 
 export const ProgramsPage: React.FC = () => {
-  const { programs, selectedItemId, setSelectedItemId } = useApp();
+  const { programs, selectedItemId, setSelectedItemId, hero } = useApp();
   const [activeCategory, setActiveCategory] = useState<string>('Semua');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -117,17 +118,34 @@ export const ProgramsPage: React.FC = () => {
       {/* Breadcrumb */}
       <Breadcrumb items={[{ label: 'Program KKG', active: true }]} />
 
-      {/* Header */}
-      <div className="text-center max-w-3xl mx-auto space-y-3">
-        <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">
-          Agenda Kegiatan KKG
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Program Kerja KKG PJOK SD Kecamatan Pagu
-        </h1>
-        <p className="text-sm sm:text-base text-slate-600">
-          Rangkaian bimtek kurikulum merdeka, seleksi atletik usia dini, dan agenda kebugaran jasmani terintegrasi Google Drive.
-        </p>
+      {/* Dynamic Hero Banner connected to Admin & Google Drive */}
+      <div className="p-6 sm:p-10 rounded-3xl text-white shadow-2xl relative overflow-hidden border border-slate-800 bg-slate-950 group">
+        {(hero.programHeroImage || './assets/images/elementary_sports_day_1793250248307.jpg') && (
+          <div className="absolute inset-0 z-0">
+            <img
+              src={hero.programHeroImage || './assets/images/elementary_sports_day_1793250248307.jpg'}
+              alt={hero.programTitle || "Program KKG PJOK"}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 opacity-40 mix-blend-luminosity filter blur-[0.5px]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-blue-950/70" />
+          </div>
+        )}
+        
+        <div className="relative z-10 space-y-4 max-w-3xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-blue-200 backdrop-blur-md border border-white/15 shadow-xs">
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span>{hero.programBadge || 'Agenda & Kegiatan KKG'}</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase drop-shadow-sm">
+            {hero.programTitle || 'Program Kerja KKG PJOK SD Kecamatan Pagu'}
+          </h1>
+
+          <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed drop-shadow-xs">
+            {hero.programDescription || 'Rangkaian bimtek kurikulum merdeka, seleksi atletik usia dini, dan agenda kebugaran jasmani terintegrasi Google Drive.'}
+          </p>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}

@@ -25,6 +25,24 @@ export interface HeroData {
     category: string;
     desc: string;
   }>;
+
+  // Hero Banner: Susunan Pengurus & Keanggotaan (AboutPage)
+  pengurusHeroImage?: string;
+  pengurusBadge?: string;
+  pengurusTitle?: string;
+  pengurusDescription?: string;
+
+  // Hero Banner: Program KKG PJOK (ProgramsPage)
+  programHeroImage?: string;
+  programBadge?: string;
+  programTitle?: string;
+  programDescription?: string;
+
+  // Hero Banner: Perangkat Pembelajaran (MaterialsPage)
+  perangkatHeroImage?: string;
+  perangkatBadge?: string;
+  perangkatTitle?: string;
+  perangkatDescription?: string;
 }
 
 export interface ClientPartner {

@@ -22,7 +22,23 @@ export const initialHero: HeroData = {
   ctaPrimaryLink: "program-kkg",
   ctaSecondaryLink: "perangkat-pembelajaran",
   heroImage: "./assets/images/hero_sport_education_1793250246629.jpg",
-  sportsHighlights: []
+  sportsHighlights: [],
+
+  // Default Page Hero Banners:
+  pengurusHeroImage: "./assets/images/kkg_teachers_meeting_1793250246883.jpg",
+  pengurusBadge: "Struktur Organisasi Resmi KKG PJOK SD Kecamatan Pagu",
+  pengurusTitle: "Susunan Pengurus & Keanggotaan",
+  pengurusDescription: "Wadah silaturahmi, kolaborasi, dan pengembangan keprofesian berkelanjutan guru Pendidikan Jasmani, Olahraga, dan Kesehatan tingkat Sekolah Dasar se-Kecamatan Pagu, Kabupaten Kediri.",
+
+  programHeroImage: "./assets/images/elementary_sports_day_1793250248307.jpg",
+  programBadge: "Agenda & Kegiatan KKG",
+  programTitle: "Program Kerja KKG PJOK SD Kecamatan Pagu",
+  programDescription: "Rangkaian bimtek kurikulum merdeka, seleksi atletik usia dini, dan agenda kebugaran jasmani terintegrasi Google Drive.",
+
+  perangkatHeroImage: "./assets/images/gymnastics_field_pagu_1793250247785.jpg",
+  perangkatBadge: "Bank Kurikulum & Modul Ajar",
+  perangkatTitle: "Perangkat Ajar PJOK SD Kurikulum Merdeka",
+  perangkatDescription: "Bank perangkat ajar gratis dan resmi yang disusun oleh guru-guru PJOK se-Kecamatan Pagu. Siap diadaptasi untuk Fase A, B, dan C."
 };
 
 export const initialPartners: ClientPartner[] = [];

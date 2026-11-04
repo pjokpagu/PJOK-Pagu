@@ -88,6 +88,7 @@ export const AdminDashboard: React.FC = () => {
   const [editingMedia, setEditingMedia] = useState<{ id: string; name: string; url: string; category: string } | null>(null);
   const [mediaSourceType, setMediaSourceType] = useState<'gdrive' | 'url'>('gdrive');
   const [gdriveInputMedia, setGdriveInputMedia] = useState('');
+  const [heroBannerTab, setHeroBannerTab] = useState<'beranda' | 'pengurus' | 'program' | 'perangkat'>('beranda');
 
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -230,11 +231,15 @@ export const AdminDashboard: React.FC = () => {
   const handleSaveProgram = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProgram) return;
+    const finalProgram = {
+      ...editingProgram,
+      image: convertGDriveToDirectImageUrl(editingProgram.image || '')
+    };
     if (isNewProgram) {
-      setPrograms(prev => [editingProgram, ...prev]);
+      setPrograms(prev => [finalProgram, ...prev]);
       showToast('Program kerja baru berhasil ditambahkan!', 'success');
     } else {
-      setPrograms(prev => prev.map(p => p.id === editingProgram.id ? editingProgram : p));
+      setPrograms(prev => prev.map(p => p.id === finalProgram.id ? finalProgram : p));
       showToast('Program kerja berhasil diperbarui!', 'success');
     }
     setEditingProgram(null);
@@ -251,11 +256,15 @@ export const AdminDashboard: React.FC = () => {
   const handleSaveArticle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingArticle) return;
+    const finalArticle = {
+      ...editingArticle,
+      thumbnail: convertGDriveToDirectImageUrl(editingArticle.thumbnail || '')
+    };
     if (isNewArticle) {
-      setArticles(prev => [editingArticle, ...prev]);
+      setArticles(prev => [finalArticle, ...prev]);
       showToast('Artikel baru berhasil diterbitkan!', 'success');
     } else {
-      setArticles(prev => prev.map(a => a.id === editingArticle.id ? editingArticle : a));
+      setArticles(prev => prev.map(a => a.id === finalArticle.id ? finalArticle : a));
       showToast('Artikel berhasil diperbarui!', 'success');
     }
     setEditingArticle(null);
@@ -272,11 +281,15 @@ export const AdminDashboard: React.FC = () => {
   const handleSaveMaterial = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMaterial) return;
+    const finalMaterial = {
+      ...editingMaterial,
+      thumbnail: convertGDriveToDirectImageUrl(editingMaterial.thumbnail || '')
+    };
     if (isNewMaterial) {
-      setMaterials(prev => [editingMaterial, ...prev]);
+      setMaterials(prev => [finalMaterial, ...prev]);
       showToast('Perangkat ajar baru berhasil diunggah!', 'success');
     } else {
-      setMaterials(prev => prev.map(m => m.id === editingMaterial.id ? editingMaterial : m));
+      setMaterials(prev => prev.map(m => m.id === finalMaterial.id ? finalMaterial : m));
       showToast('Perangkat ajar berhasil diperbarui!', 'success');
     }
     setEditingMaterial(null);
@@ -863,119 +876,519 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 2: KELOLA HERO */}
+          {/* TAB 2: KELOLA HERO & BANNER WEBSITE (GOOGLE DRIVE) */}
           {activeTab === 'hero' && (
             <div className={`p-6 sm:p-8 rounded-2xl border ${isAdminDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-6 animate-in fade-in`}>
-              <div className="flex items-center justify-between border-b border-slate-200/50 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/50 dark:border-slate-800 pb-4">
                 <div>
-                  <h2 className="text-lg font-bold">Kelola Hero Banner Beranda</h2>
-                  <p className="text-xs text-slate-500">Sesuaikan badge, judul besar, dan deskripsi utama.</p>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold">Kelola Hero &amp; Banner Website</h2>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+                      <FolderUp className="w-3 h-3" />
+                      <span>Google Drive Terkoneksi</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Edit foto banner utama yang tampil di Beranda, Halaman Susunan Pengurus, Program KKG, dan Perangkat Pembelajaran.
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-4 text-xs">
-                <div>
-                  <label className="block font-semibold mb-1">Badge Kicker</label>
-                  <input
-                    type="text"
-                    value={hero.badge}
-                    onChange={(e) => setHero({ ...hero, badge: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-                  />
+              {/* GDrive Guidance Callout */}
+              <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 flex items-start gap-2.5 text-xs">
+                <FolderUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-[11px] leading-relaxed">
+                  <span className="font-bold">Panduan Memasang Foto Google Drive ke Banner Website:</span>
+                  <ol className="list-decimal ml-4 mt-0.5 space-y-0.5 text-slate-700 dark:text-emerald-300">
+                    <li>Buka foto di Google Drive Anda &gt; Klik kanan &gt; Pilih <strong>Bagikan (Share)</strong>.</li>
+                    <li>Ubah Akses Umum menjadi <strong>"Siapa saja yang memiliki link"</strong> (Anyone with the link).</li>
+                    <li>Salin link tersebut dan tempelkan pada kolom <em>Link Google Drive</em> di tab halaman pilihan Anda.</li>
+                    <li>Sistem otomatis mengonversi ke link gambar langsung resolusi tinggi dan langsung tampil di halaman website!</li>
+                  </ol>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Sub-Tab Selector for Page Banners */}
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/70 rounded-xl overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setHeroBannerTab('beranda')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    heroBannerTab === 'beranda'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>1. Hero Beranda Utama</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHeroBannerTab('pengurus')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    heroBannerTab === 'pengurus'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>2. Hero Susunan Pengurus</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHeroBannerTab('program')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    heroBannerTab === 'program'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>3. Hero Program KKG</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHeroBannerTab('perangkat')}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    heroBannerTab === 'perangkat'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>4. Hero Perangkat Pembelajaran</span>
+                </button>
+              </div>
+
+              {/* SUBTAB 1: HERO BERANDA UTAMA */}
+              {heroBannerTab === 'beranda' && (
+                <div className="space-y-4 text-xs animate-in fade-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-slate-800">
+                    <h3 className="font-bold text-sm text-blue-900 dark:text-blue-300">
+                      Pengaturan Hero Banner Halaman Beranda (Home)
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage('beranda')}
+                      className="text-[11px] font-semibold text-blue-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Lihat Halaman Beranda</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+
                   <div>
-                    <label className="block font-semibold mb-1">Judul Utama</label>
+                    <label className="block font-semibold mb-1">Badge Kicker</label>
                     <input
                       type="text"
-                      value={hero.title}
-                      onChange={(e) => setHero({ ...hero, title: e.target.value })}
+                      value={hero.badge}
+                      onChange={(e) => setHero({ ...hero, badge: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
                     />
                   </div>
-                  <div>
-                    <label className="block font-semibold mb-1">Teks Sorotan Warna</label>
-                    <input
-                      type="text"
-                      value={hero.highlightedText}
-                      onChange={(e) => setHero({ ...hero, highlightedText: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block font-semibold mb-1">Deskripsi Lengkap Hero</label>
-                  <textarea
-                    rows={4}
-                    value={hero.description}
-                    onChange={(e) => setHero({ ...hero, description: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block font-semibold mb-1">Label Tombol Primer</label>
-                    <input
-                      type="text"
-                      value={hero.ctaPrimaryText}
-                      onChange={(e) => setHero({ ...hero, ctaPrimaryText: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold mb-1">Label Tombol Sekunder</label>
-                    <input
-                      type="text"
-                      value={hero.ctaSecondaryText}
-                      onChange={(e) => setHero({ ...hero, ctaSecondaryText: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="block font-semibold">Path / URL Gambar Banner Hero</label>
-                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                      <FolderUp className="w-3.5 h-3.5" />
-                      Mendukung Link Google Drive
-                    </span>
-                  </div>
-                  <input
-                    type="text"
-                    value={hero.heroImage}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const direct = convertGDriveToDirectImageUrl(val);
-                      setHero({ ...hero, heroImage: direct });
-                    }}
-                    placeholder="Masukkan path gambar atau link sharing Google Drive..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs font-mono"
-                  />
-                  <p className="text-[11px] text-slate-500">
-                    Bisa berupa URL gambar biasa atau link Google Drive ("Siapa saja yang memiliki link"). Sistem otomatis mengonversinya menjadi URL gambar langsung.
-                  </p>
-                  {hero.heroImage && (
-                    <div className="mt-2 w-48 h-28 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 relative shadow-xs">
-                      <img 
-                        src={hero.heroImage} 
-                        alt="Preview Banner Hero" 
-                        className="w-full h-full object-cover" 
-                        referrerPolicy="no-referrer"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-semibold mb-1">Judul Utama</label>
+                      <input
+                        type="text"
+                        value={hero.title}
+                        onChange={(e) => setHero({ ...hero, title: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
                       />
                     </div>
-                  )}
+                    <div>
+                      <label className="block font-semibold mb-1">Teks Sorotan Warna</label>
+                      <input
+                        type="text"
+                        value={hero.highlightedText}
+                        onChange={(e) => setHero({ ...hero, highlightedText: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Deskripsi Lengkap Hero</label>
+                    <textarea
+                      rows={3}
+                      value={hero.description}
+                      onChange={(e) => setHero({ ...hero, description: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block font-semibold mb-1">Label Tombol Primer</label>
+                      <input
+                        type="text"
+                        value={hero.ctaPrimaryText}
+                        onChange={(e) => setHero({ ...hero, ctaPrimaryText: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1">Label Tombol Sekunder</label>
+                      <input
+                        type="text"
+                        value={hero.ctaSecondaryText}
+                        onChange={(e) => setHero({ ...hero, ctaSecondaryText: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <label className="block font-semibold">Link Foto Banner Beranda (Google Drive / URL) *</label>
+                      {extractGDriveFileId(hero.heroImage) && (
+                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          ID GDrive Terdeteksi
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={hero.heroImage}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const direct = convertGDriveToDirectImageUrl(val);
+                        setHero({ ...hero, heroImage: direct });
+                      }}
+                      placeholder="Tempel link Google Drive atau URL gambar..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs font-mono"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Bisa tempel link Google Drive apa saja (contoh: <code>drive.google.com/file/d/.../view?usp=sharing</code>). Sistem otomatis mengonversinya.
+                    </p>
+
+                    {hero.heroImage && (
+                      <div className="mt-3 flex items-center gap-4">
+                        <div className="w-40 h-24 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shrink-0 shadow-xs">
+                          <img 
+                            src={hero.heroImage} 
+                            alt="Preview Banner Hero Beranda" 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="text-[11px] text-slate-500 space-y-1">
+                          <div className="font-bold text-slate-800 dark:text-slate-200">Pratinjau Foto Banner Beranda</div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate max-w-xs">{hero.heroImage}</div>
+                          <div className="text-[10px] text-emerald-600 font-medium">✓ Foto terhubung dengan halaman depan website</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB 2: HERO SUSUNAN PENGURUS */}
+              {heroBannerTab === 'pengurus' && (
+                <div className="space-y-4 text-xs animate-in fade-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-slate-800">
+                    <h3 className="font-bold text-sm text-blue-900 dark:text-blue-300">
+                      Pengaturan Hero Banner Halaman Susunan Pengurus &amp; Guru
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage('tentang-kami')}
+                      className="text-[11px] font-semibold text-blue-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Lihat Halaman Pengurus</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Badge Banner Pengurus</label>
+                    <input
+                      type="text"
+                      value={hero.pengurusBadge || ''}
+                      onChange={(e) => setHero({ ...hero, pengurusBadge: e.target.value })}
+                      placeholder="Struktur Organisasi Resmi KKG PJOK SD Kecamatan Pagu"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Judul Banner Pengurus</label>
+                    <input
+                      type="text"
+                      value={hero.pengurusTitle || ''}
+                      onChange={(e) => setHero({ ...hero, pengurusTitle: e.target.value })}
+                      placeholder="Susunan Pengurus & Keanggotaan"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Deskripsi Banner Pengurus</label>
+                    <textarea
+                      rows={3}
+                      value={hero.pengurusDescription || ''}
+                      onChange={(e) => setHero({ ...hero, pengurusDescription: e.target.value })}
+                      placeholder="Wadah silaturahmi, kolaborasi, dan pengembangan keprofesian berkelanjutan..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <label className="block font-semibold">Link Foto Banner Pengurus (Google Drive / URL) *</label>
+                      {extractGDriveFileId(hero.pengurusHeroImage || '') && (
+                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          ID GDrive Terdeteksi
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={hero.pengurusHeroImage || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const direct = convertGDriveToDirectImageUrl(val);
+                        setHero({ ...hero, pengurusHeroImage: direct });
+                      }}
+                      placeholder="Tempel link Google Drive foto pengurus / pertemuan KKG..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs font-mono"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Foto ini akan dijadikan latar belakang hero banner pada halaman Susunan Pengurus &amp; Keanggotaan.
+                    </p>
+
+                    {(hero.pengurusHeroImage || './assets/images/kkg_teachers_meeting_1793250246883.jpg') && (
+                      <div className="mt-3 flex items-center gap-4">
+                        <div className="w-40 h-24 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shrink-0 shadow-xs relative">
+                          <img 
+                            src={hero.pengurusHeroImage || './assets/images/kkg_teachers_meeting_1793250246883.jpg'} 
+                            alt="Preview Banner Pengurus" 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="text-[11px] text-slate-500 space-y-1">
+                          <div className="font-bold text-slate-800 dark:text-slate-200">Pratinjau Foto Banner Pengurus</div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate max-w-xs">{hero.pengurusHeroImage}</div>
+                          <div className="text-[10px] text-emerald-600 font-medium">✓ Terhubung langsung ke Halaman Pengurus KKG</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB 3: HERO PROGRAM KKG */}
+              {heroBannerTab === 'program' && (
+                <div className="space-y-4 text-xs animate-in fade-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-slate-800">
+                    <h3 className="font-bold text-sm text-blue-900 dark:text-blue-300">
+                      Pengaturan Hero Banner Halaman Program Kerja KKG PJOK
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage('program-kkg')}
+                      className="text-[11px] font-semibold text-blue-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Lihat Halaman Program</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Badge Banner Program</label>
+                    <input
+                      type="text"
+                      value={hero.programBadge || ''}
+                      onChange={(e) => setHero({ ...hero, programBadge: e.target.value })}
+                      placeholder="Agenda & Kegiatan KKG"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Judul Banner Program</label>
+                    <input
+                      type="text"
+                      value={hero.programTitle || ''}
+                      onChange={(e) => setHero({ ...hero, programTitle: e.target.value })}
+                      placeholder="Program Kerja KKG PJOK SD Kecamatan Pagu"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Deskripsi Banner Program</label>
+                    <textarea
+                      rows={3}
+                      value={hero.programDescription || ''}
+                      onChange={(e) => setHero({ ...hero, programDescription: e.target.value })}
+                      placeholder="Rangkaian bimtek kurikulum merdeka, seleksi atletik usia dini..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <label className="block font-semibold">Link Foto Banner Program KKG (Google Drive / URL) *</label>
+                      {extractGDriveFileId(hero.programHeroImage || '') && (
+                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          ID GDrive Terdeteksi
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={hero.programHeroImage || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const direct = convertGDriveToDirectImageUrl(val);
+                        setHero({ ...hero, programHeroImage: direct });
+                      }}
+                      placeholder="Tempel link Google Drive foto kegiatan / perlombaan..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs font-mono"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Foto ini akan dijadikan latar belakang hero banner pada halaman Program KKG PJOK.
+                    </p>
+
+                    {(hero.programHeroImage || './assets/images/elementary_sports_day_1793250248307.jpg') && (
+                      <div className="mt-3 flex items-center gap-4">
+                        <div className="w-40 h-24 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shrink-0 shadow-xs relative">
+                          <img 
+                            src={hero.programHeroImage || './assets/images/elementary_sports_day_1793250248307.jpg'} 
+                            alt="Preview Banner Program" 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="text-[11px] text-slate-500 space-y-1">
+                          <div className="font-bold text-slate-800 dark:text-slate-200">Pratinjau Foto Banner Program</div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate max-w-xs">{hero.programHeroImage}</div>
+                          <div className="text-[10px] text-emerald-600 font-medium">✓ Terhubung langsung ke Halaman Program KKG</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* SUBTAB 4: HERO PERANGKAT PEMBELAJARAN */}
+              {heroBannerTab === 'perangkat' && (
+                <div className="space-y-4 text-xs animate-in fade-in">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/50 dark:border-slate-800">
+                    <h3 className="font-bold text-sm text-blue-900 dark:text-blue-300">
+                      Pengaturan Hero Banner Halaman Perangkat Pembelajaran &amp; Modul
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage('perangkat-pembelajaran')}
+                      className="text-[11px] font-semibold text-blue-600 hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>Lihat Halaman Perangkat Ajar</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Badge Banner Perangkat</label>
+                    <input
+                      type="text"
+                      value={hero.perangkatBadge || ''}
+                      onChange={(e) => setHero({ ...hero, perangkatBadge: e.target.value })}
+                      placeholder="Bank Kurikulum & Modul Ajar"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Judul Banner Perangkat</label>
+                    <input
+                      type="text"
+                      value={hero.perangkatTitle || ''}
+                      onChange={(e) => setHero({ ...hero, perangkatTitle: e.target.value })}
+                      placeholder="Perangkat Ajar PJOK SD Kurikulum Merdeka"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold mb-1">Deskripsi Banner Perangkat</label>
+                    <textarea
+                      rows={3}
+                      value={hero.perangkatDescription || ''}
+                      onChange={(e) => setHero({ ...hero, perangkatDescription: e.target.value })}
+                      placeholder="Bank perangkat ajar gratis dan resmi yang disusun oleh guru-guru PJOK..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                    />
+                  </div>
+
+                  <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between">
+                      <label className="block font-semibold">Link Foto Banner Perangkat Ajar (Google Drive / URL) *</label>
+                      {extractGDriveFileId(hero.perangkatHeroImage || '') && (
+                        <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          ID GDrive Terdeteksi
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={hero.perangkatHeroImage || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const direct = convertGDriveToDirectImageUrl(val);
+                        setHero({ ...hero, perangkatHeroImage: direct });
+                      }}
+                      placeholder="Tempel link Google Drive foto lapangan olahraga / senam..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-xs font-mono"
+                    />
+                    <p className="text-[10px] text-slate-500">
+                      Foto ini akan dijadikan latar belakang hero banner pada halaman Perangkat Pembelajaran &amp; Modul Ajar.
+                    </p>
+
+                    {(hero.perangkatHeroImage || './assets/images/gymnastics_field_pagu_1793250247785.jpg') && (
+                      <div className="mt-3 flex items-center gap-4">
+                        <div className="w-40 h-24 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shrink-0 shadow-xs relative">
+                          <img 
+                            src={hero.perangkatHeroImage || './assets/images/gymnastics_field_pagu_1793250247785.jpg'} 
+                            alt="Preview Banner Perangkat" 
+                            className="w-full h-full object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                        <div className="text-[11px] text-slate-500 space-y-1">
+                          <div className="font-bold text-slate-800 dark:text-slate-200">Pratinjau Foto Banner Perangkat</div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate max-w-xs">{hero.perangkatHeroImage}</div>
+                          <div className="text-[10px] text-emerald-600 font-medium">✓ Terhubung langsung ke Halaman Perangkat Ajar</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Save Button for All Banners */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-200/60 dark:border-slate-800">
+                <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Perubahan langsung tersinkronisasi ke Firebase Firestore &amp; halaman website.</span>
                 </div>
 
                 <button
-                  onClick={() => showToast('Pengaturan Hero berhasil disimpan!', 'success')}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2"
+                  type="button"
+                  onClick={() => {
+                    showToast('Pengaturan Hero & Banner Website berhasil disimpan & disinkronisasi ke website!', 'success');
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold inline-flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Simpan Perubahan Hero</span>
+                  <span>Simpan &amp; Tampilkan di Website</span>
                 </button>
               </div>
             </div>
