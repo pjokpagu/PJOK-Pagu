@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { subscribeToCloudDoc, saveToCloudDoc } from '../lib/firebase';
 import {
   NavPage,
   HeroData,
@@ -82,6 +83,7 @@ interface AppContextType {
   resetAllData: () => void;
   exportDataJSON: () => void;
   importDataJSON: (jsonString: string) => boolean;
+  isCloudActive: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -265,9 +267,123 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Sync to localStorage safely
+  // Reference flags to prevent cyclic echo loops when receiving Firestore cloud updates
+  const remoteUpdateFlags = useRef<{ [key: string]: boolean }>({});
+  const isInitialMount = useRef<boolean>(true);
+  const [isCloudActive, setIsCloudActive] = useState<boolean>(true);
+
+  // Set up Real-time Cloud Listeners across all devices (Laptop, HP, Tablet, Visitors)
+  useEffect(() => {
+    // 1. Teachers Real-time Cloud Sync
+    const unsubTeachers = subscribeToCloudDoc('teachers', (data) => {
+      if (Array.isArray(data?.items) && data.items.length > 0) {
+        remoteUpdateFlags.current['teachers'] = true;
+        setTeachers(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'teachers', JSON.stringify(data.items));
+      }
+    });
+
+    // 2. Programs Real-time Cloud Sync
+    const unsubPrograms = subscribeToCloudDoc('programs', (data) => {
+      if (Array.isArray(data?.items) && data.items.length > 0) {
+        remoteUpdateFlags.current['programs'] = true;
+        setPrograms(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'programs', JSON.stringify(data.items));
+      }
+    });
+
+    // 3. Materials Real-time Cloud Sync
+    const unsubMaterials = subscribeToCloudDoc('materials', (data) => {
+      if (Array.isArray(data?.items) && data.items.length > 0) {
+        remoteUpdateFlags.current['materials'] = true;
+        setMaterials(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'materials', JSON.stringify(data.items));
+      }
+    });
+
+    // 4. Articles Real-time Cloud Sync
+    const unsubArticles = subscribeToCloudDoc('articles', (data) => {
+      if (Array.isArray(data?.items) && data.items.length > 0) {
+        remoteUpdateFlags.current['articles'] = true;
+        setArticles(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'articles', JSON.stringify(data.items));
+      }
+    });
+
+    // 5. Activities Real-time Cloud Sync
+    const unsubActivities = subscribeToCloudDoc('activities', (data) => {
+      if (Array.isArray(data?.items)) {
+        remoteUpdateFlags.current['activities'] = true;
+        setActivities(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'activities', JSON.stringify(data.items));
+      }
+    });
+
+    // 6. Agenda Real-time Cloud Sync
+    const unsubAgenda = subscribeToCloudDoc('agenda', (data) => {
+      if (Array.isArray(data?.items) && data.items.length > 0) {
+        remoteUpdateFlags.current['agenda'] = true;
+        setAgenda(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'agenda', JSON.stringify(data.items));
+      }
+    });
+
+    // 7. Hero Real-time Cloud Sync
+    const unsubHero = subscribeToCloudDoc('hero', (data) => {
+      if (data?.data && typeof data.data === 'object') {
+        remoteUpdateFlags.current['hero'] = true;
+        setHero(data.data);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify(data.data));
+      }
+    });
+
+    // 8. Settings Real-time Cloud Sync
+    const unsubSettings = subscribeToCloudDoc('settings', (data) => {
+      if (data?.data && typeof data.data === 'object') {
+        remoteUpdateFlags.current['settings'] = true;
+        setSettings(prev => ({ ...prev, ...data.data }));
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'settings', JSON.stringify(data.data));
+      }
+    });
+
+    // 9. Media Real-time Cloud Sync
+    const unsubMedia = subscribeToCloudDoc('media', (data) => {
+      if (Array.isArray(data?.items)) {
+        remoteUpdateFlags.current['media'] = true;
+        setMediaList(data.items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'media', JSON.stringify(data.items));
+      }
+    });
+
+    // Mark initial mount as complete after a small delay to avoid overwriting cloud with default initial data
+    const timer = setTimeout(() => {
+      isInitialMount.current = false;
+    }, 1500);
+
+    return () => {
+      clearTimeout(timer);
+      unsubTeachers();
+      unsubPrograms();
+      unsubMaterials();
+      unsubArticles();
+      unsubActivities();
+      unsubAgenda();
+      unsubHero();
+      unsubSettings();
+      unsubMedia();
+    };
+  }, []);
+
+  // Sync to localStorage and push updates to Firestore Cloud for all connected devices
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify(hero));
+    if (remoteUpdateFlags.current['hero']) {
+      remoteUpdateFlags.current['hero'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('hero', { data: hero });
+    }
   }, [hero]);
 
   useEffect(() => {
@@ -276,6 +392,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'teachers', JSON.stringify(teachers));
+    if (remoteUpdateFlags.current['teachers']) {
+      remoteUpdateFlags.current['teachers'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('teachers', { items: teachers });
+    }
   }, [teachers]);
 
   useEffect(() => {
@@ -284,22 +407,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'programs', JSON.stringify(programs));
+    if (remoteUpdateFlags.current['programs']) {
+      remoteUpdateFlags.current['programs'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('programs', { items: programs });
+    }
   }, [programs]);
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'materials', JSON.stringify(materials));
+    if (remoteUpdateFlags.current['materials']) {
+      remoteUpdateFlags.current['materials'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('materials', { items: materials });
+    }
   }, [materials]);
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'articles', JSON.stringify(articles));
+    if (remoteUpdateFlags.current['articles']) {
+      remoteUpdateFlags.current['articles'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('articles', { items: articles });
+    }
   }, [articles]);
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'activities', JSON.stringify(activities));
+    if (remoteUpdateFlags.current['activities']) {
+      remoteUpdateFlags.current['activities'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('activities', { items: activities });
+    }
   }, [activities]);
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'agenda', JSON.stringify(agenda));
+    if (remoteUpdateFlags.current['agenda']) {
+      remoteUpdateFlags.current['agenda'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('agenda', { items: agenda });
+    }
   }, [agenda]);
 
   useEffect(() => {
@@ -308,10 +466,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'settings', JSON.stringify(settings));
+    if (remoteUpdateFlags.current['settings']) {
+      remoteUpdateFlags.current['settings'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('settings', { data: settings });
+    }
   }, [settings]);
 
   useEffect(() => {
     safeLocalStorageSet(STORAGE_KEY_PREFIX + 'media', JSON.stringify(mediaList));
+    if (remoteUpdateFlags.current['media']) {
+      remoteUpdateFlags.current['media'] = false;
+      return;
+    }
+    if (!isInitialMount.current) {
+      saveToCloudDoc('media', { items: mediaList });
+    }
   }, [mediaList]);
 
   useEffect(() => {
@@ -486,7 +658,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         logoutAdmin,
         resetAllData,
         exportDataJSON,
-        importDataJSON
+        importDataJSON,
+        isCloudActive
       }}
     >
       {children}

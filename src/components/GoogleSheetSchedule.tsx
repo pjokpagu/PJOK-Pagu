@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { subscribeToCloudDoc, saveToCloudDoc } from '../lib/firebase';
 import { 
   FileSpreadsheet, 
   ExternalLink, 
@@ -50,6 +51,23 @@ export const GoogleSheetSchedule: React.FC<GoogleSheetScheduleProps> = ({
   const [gid, setGid] = useState<string>(() => {
     return localStorage.getItem('kkg_pjok_sheet_gid') || '';
   });
+
+  // Subscribe to real-time cloud sheet configuration across all devices
+  useEffect(() => {
+    const unsub = subscribeToCloudDoc('sheet_config', (data) => {
+      if (data?.url && typeof data.url === 'string' && data.url.trim()) {
+        const cleanCloudUrl = data.url.trim();
+        setSheetUrl(cleanCloudUrl);
+        setInputUrl(cleanCloudUrl);
+        localStorage.setItem('kkg_pjok_sheet_url', cleanCloudUrl);
+        if (data.gid) {
+          setGid(data.gid);
+          localStorage.setItem('kkg_pjok_sheet_gid', data.gid);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
 
   // Sinkronkan prop initialUrl jika berubah dan state masih kosong
   useEffect(() => {
@@ -115,6 +133,8 @@ export const GoogleSheetSchedule: React.FC<GoogleSheetScheduleProps> = ({
     if (gid) {
       localStorage.setItem('kkg_pjok_sheet_gid', gid);
     }
+    // Sync to Firestore Cloud for all devices
+    saveToCloudDoc('sheet_config', { url: cleanUrl, gid });
     if (onUrlChange) {
       onUrlChange(cleanUrl);
     }

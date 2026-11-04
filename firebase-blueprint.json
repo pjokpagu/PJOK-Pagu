@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "KKGDataDoc": {
+      "title": "KKGDataDoc",
+      "description": "Dynamic real-time synchronized data document for KKG PJOK portal entities",
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "List of entity items"
+        },
+        "data": {
+          "type": "object",
+          "description": "Object payload for singleton entities"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/kkg_data/{docId}": {
+      "schema": "KKGDataDoc",
+      "description": "Real-time synchronized portal collections and configuration for KKG PJOK SD Kecamatan Pagu"
+    }
+  }
+}

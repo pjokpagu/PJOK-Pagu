@@ -414,7 +414,10 @@ export const AdminDashboard: React.FC = () => {
                 </div>
                 <div>
                   <div className="font-extrabold text-sm tracking-tight">Admin KKG PJOK</div>
-                  <div className="text-[10px] text-slate-400">Pagu, Kab. Kediri</div>
+                  <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Cloud Sync Aktif</span>
+                  </div>
                 </div>
               </div>
 
@@ -676,8 +679,14 @@ export const AdminDashboard: React.FC = () => {
             <div className="space-y-8 animate-in fade-in duration-200">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-black tracking-tight">Ringkasan Sistem KKG PJOK</h1>
-                  <p className="text-xs text-slate-500 mt-1">Status database lokal terhubung & siap digunakan di berbagai hosting.</p>
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h1 className="text-2xl font-black tracking-tight">Ringkasan Sistem KKG PJOK</h1>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border-emerald-700">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Cloud Realtime Sync Aktif</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Database Cloud Firestore terhubung secara real-time antar perangkat (Laptop, Komputer, HP, & Tablet).</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
