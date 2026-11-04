@@ -58,8 +58,6 @@ type AdminTab =
   | 'artikel'
   | 'perangkat'
   | 'agenda'
-  | 'testimoni'
-  | 'mitra'
   | 'media'
   | 'seo'
   | 'pengaturan';
@@ -294,8 +292,6 @@ export const AdminDashboard: React.FC = () => {
     { id: 'artikel', label: 'Kelola Artikel & Berita', icon: <FileText className="w-4 h-4" /> },
     { id: 'perangkat', label: 'Kelola Perangkat Ajar', icon: <FolderPlus className="w-4 h-4" /> },
     { id: 'agenda', label: 'Kelola Agenda Kegiatan', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'testimoni', label: 'Kelola Testimoni', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 'mitra', label: 'Kelola Mitra / Client', icon: <Users className="w-4 h-4" /> },
     { id: 'media', label: 'Media Manager (Upload)', icon: <Layers className="w-4 h-4" /> },
     { id: 'seo', label: 'Pengaturan SEO & Meta', icon: <Globe className="w-4 h-4" /> },
     { id: 'pengaturan', label: 'Pengaturan Website', icon: <SettingsIcon className="w-4 h-4" /> },
@@ -1493,60 +1489,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
           )}
 
-          {/* TAB 9: KELOLA TESTIMONI */}
-          {activeTab === 'testimoni' && (
-            <div className={`p-6 sm:p-8 rounded-2xl border ${isAdminDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-6 animate-in fade-in`}>
-              <div className="flex items-center justify-between border-b border-slate-200/50 pb-4">
-                <div>
-                  <h2 className="text-lg font-bold">Kelola Testimoni & Ulasan</h2>
-                  <p className="text-xs text-slate-500">Ulasan dari Pengawas, Kepala Sekolah, dan Guru.</p>
-                </div>
-              </div>
 
-              <div className="space-y-3">
-                {testimonials.map((test) => (
-                  <div
-                    key={test.id}
-                    className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} space-y-2`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <img src={test.avatar} alt={test.name} className="w-10 h-10 rounded-full object-cover" />
-                      <div>
-                        <div className="text-xs font-bold">{test.name}</div>
-                        <div className="text-[11px] text-blue-600">{test.role} · {test.school}</div>
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-600 italic">"{test.quote}"</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 10: KELOLA MITRA */}
-          {activeTab === 'mitra' && (
-            <div className={`p-6 sm:p-8 rounded-2xl border ${isAdminDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} space-y-6 animate-in fade-in`}>
-              <div className="flex items-center justify-between border-b border-slate-200/50 pb-4">
-                <div>
-                  <h2 className="text-lg font-bold">Kelola Mitra & Client Instansi</h2>
-                  <p className="text-xs text-slate-500">Dinas, Korwilcam, Puskesmas, dan Organisasi Keolahragaan.</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {partners.map((partner) => (
-                  <div
-                    key={partner.id}
-                    className={`p-4 rounded-xl border ${isAdminDarkMode ? 'border-slate-800 bg-slate-800/40' : 'border-slate-200 bg-slate-50'} space-y-1`}
-                  >
-                    <div className="text-xs font-extrabold text-blue-600">{partner.logoText}</div>
-                    <div className="text-sm font-bold">{partner.name}</div>
-                    <div className="text-xs text-slate-400">{partner.role} · {partner.tagline}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* TAB 11: MEDIA MANAGER (UPLOAD IMAGE) */}
           {activeTab === 'media' && (
