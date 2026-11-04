@@ -366,7 +366,7 @@ export const initialPrograms: ProgramKKG[] = [
     driveLink: "https://drive.google.com/drive/folders/1hEZqNXe-OzoitFFhXzutpuGGyCorz_UL?usp=sharing",
     description: "Kegiatan Praktik Baik yag dilakukan setiap Minggu pertama setiap bulan (Kondisional), secara bergantian, dilakukan disekolah masing - masing dan dimulai pukul 10.00 WIB - Selesai.",
     status: "Akan Datang",
-    targetParticipants: "16 Guru PJOK SD Negeri & Swasta se-Kecamatan Pagu",
+    targetParticipants: "Seluruh Guru PJOK SD Negeri & Swasta se-Kecamatan Pagu",
     materials: [
       { title: "Buku Pedoman CP & ATP PJOK Fase A-B-C.pdf", size: "4.2 MB", link: "https://drive.google.com" },
       { title: "Template Modul Ajar Berdiferensiasi.docx", size: "1.8 MB", link: "https://drive.google.com" },

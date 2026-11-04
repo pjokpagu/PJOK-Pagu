@@ -164,42 +164,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) { 
       try { 
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed
-            .filter((p: ProgramKKG) => p.id !== 'prg-3')
-            .map((p: ProgramKKG) => {
-              if (p.id === 'prg-1') {
-                return {
-                  ...p,
-                  category: 'Praktik Baik' as const,
-                  title: 'PRAKTIK BAIK DALAM PEMBELAJARAN PJOK',
-                  description: 'Kegiatan Praktik Baik yag dilakukan setiap Minggu pertama setiap bulan (Kondisional), secara bergantian, dilakukan disekolah masing - masing dan dimulai pukul 10.00 WIB - Selesai.',
-                  driveLink: 'https://drive.google.com/drive/folders/1hEZqNXe-OzoitFFhXzutpuGGyCorz_UL?usp=sharing'
-                };
-              }
-              if (p.id === 'prg-2') {
-                return {
-                  ...p,
-                  driveLink: 'https://drive.google.com/drive/folders/1ixRI2tvCigxfHSUZZ13LB_-1DTZb1qE7?usp=sharing'
-                };
-              }
-              if (p.id === 'prg-4') {
-                return {
-                  ...p,
-                  date: 'Rabu, Minggu pertama dalam setiap bulan',
-                  time: '10.00 - Selesai',
-                  location: 'SD Masing - masing',
-                  description: 'Rapat koordinasi dan kegiatan kelompok guru yang dilakukan setiap hari rabu.',
-                  driveLink: 'https://drive.google.com/drive/folders/1DV1pTbtF3WO3wnk7CKWoZemHkKyBNvlG?usp=sharing'
-                };
-              }
-              if ((p.category as string) === 'Bimtek & Workshop') {
-                return { ...p, category: 'Praktik Baik' as const };
-              }
-              return p;
-            });
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
         }
-      } catch (e) {} 
+      } catch (e) {
+        console.warn('Failed to load saved programs:', e);
+      } 
     }
     return initialPrograms;
   });
@@ -209,20 +179,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) { 
       try { 
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed.map((m: LearningMaterial) => ({
-            ...m,
-            title: `PERANGKAT PEMBELAJARAN ${m.grade.toUpperCase()}`
-          }));
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
         }
-      } catch (e) {} 
+      } catch (e) {
+        console.warn('Failed to load saved materials:', e);
+      } 
     }
     return initialMaterials;
   });
 
   const [articles, setArticles] = useState<ArticleInfo[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PREFIX + 'articles');
-    if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    if (saved) { 
+      try { 
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {} 
+    }
     return initialArticles;
   });
 
@@ -232,8 +208,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try { 
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const isMock = parsed.every((a: ActivityPhoto) => ['act-1', 'act-2', 'act-3', 'act-4'].includes(a.id));
-          if (isMock) return [];
           return parsed;
         }
       } catch (e) {} 
@@ -247,8 +221,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try { 
         const parsed = JSON.parse(saved); 
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const filtered = parsed.filter((item: AgendaItem) => item.id !== 'ag-3' && item.id !== 'ag-4');
-          return filtered;
+          return parsed;
         }
       } catch (e) {} 
     }
