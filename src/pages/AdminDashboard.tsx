@@ -121,7 +121,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleCopySupabaseSchema = () => {
     const sqlContent = `-- ==============================================================================
--- SCHEMA DATABASE SUPABASE UNTUK PORTAL KKG PJOK SD KECAMATAN PAGU
+-- SCHEMA DATABASE SUPABASE UNTUK PORTAL KKG PJOK SD KECAMATAN PAGU (IDEMPOTEN)
 -- ==============================================================================
 create table if not exists public.kkg_data (
   id text primary key,
@@ -132,6 +132,11 @@ create table if not exists public.kkg_data (
 
 alter table public.kkg_data enable row level security;
 
+-- Hapus policy lama jika ada untuk mencegah error 42710
+drop policy if exists "Izinkan akses baca publik untuk kkg_data" on public.kkg_data;
+drop policy if exists "Izinkan akses tulis publik untuk kkg_data" on public.kkg_data;
+drop policy if exists "Izinkan akses update publik untuk kkg_data" on public.kkg_data;
+
 create policy "Izinkan akses baca publik untuk kkg_data"
   on public.kkg_data for select using (true);
 
@@ -141,7 +146,17 @@ create policy "Izinkan akses tulis publik untuk kkg_data"
 create policy "Izinkan akses update publik untuk kkg_data"
   on public.kkg_data for update using (true) with check (true);
 
-alter publication supabase_realtime add table public.kkg_data;`;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables 
+    where pubname = 'supabase_realtime' 
+      and schemaname = 'public' 
+      and tablename = 'kkg_data'
+  ) then
+    alter publication supabase_realtime add table public.kkg_data;
+  end if;
+end $$;`;
     navigator.clipboard.writeText(sqlContent);
     setSupabaseCopySuccess(true);
     showToast('Skrip SQL schema Supabase berhasil disalin!', 'success');
