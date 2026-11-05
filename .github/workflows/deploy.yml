@@ -41,7 +41,9 @@ jobs:
         run: npm run build
 
       - name: Setup GitHub Pages
+        id: pages
         uses: actions/configure-pages@v5
+        continue-on-error: true
         with:
           enablement: true
 

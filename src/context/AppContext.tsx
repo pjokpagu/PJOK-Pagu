@@ -281,111 +281,143 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Set up Real-time Cloud Listeners across all devices (Laptop, HP, Tablet, Visitors)
   useEffect(() => {
+    // Helper to safely extract arrays from various document envelopes
+    const extractItems = (data: any): any[] | null => {
+      if (Array.isArray(data?.items)) return data.items;
+      if (Array.isArray(data)) return data;
+      if (Array.isArray(data?.data)) return data.data;
+      return null;
+    };
+
+    // Helper to safely extract object payloads (e.g. hero, settings)
+    const extractObjectDoc = (data: any): Record<string, any> | null => {
+      if (data?.data && typeof data.data === 'object' && !Array.isArray(data.data)) {
+        return data.data;
+      }
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        const { id, last_updated, lastUpdated, ...rest } = data;
+        return Object.keys(rest).length > 0 ? rest : null;
+      }
+      return null;
+    };
+
     // 1. Teachers Real-time Cloud Sync
     const unsubTeachers = subscribeToCloudDoc('teachers', (data) => {
-      if (Array.isArray(data?.items) && data.items.length > 0) {
+      const items = extractItems(data);
+      if (items && items.length > 0) {
         remoteUpdateFlags.current['teachers'] = true;
-        setTeachers(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'teachers', JSON.stringify(data.items));
+        setTeachers(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'teachers', JSON.stringify(items));
       }
     });
 
     // 2. Programs Real-time Cloud Sync
     const unsubPrograms = subscribeToCloudDoc('programs', (data) => {
-      if (Array.isArray(data?.items) && data.items.length > 0) {
+      const items = extractItems(data);
+      if (items && items.length > 0) {
         remoteUpdateFlags.current['programs'] = true;
-        setPrograms(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'programs', JSON.stringify(data.items));
+        setPrograms(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'programs', JSON.stringify(items));
       }
     });
 
     // 3. Materials Real-time Cloud Sync
     const unsubMaterials = subscribeToCloudDoc('materials', (data) => {
-      if (Array.isArray(data?.items) && data.items.length > 0) {
+      const items = extractItems(data);
+      if (items && items.length > 0) {
         remoteUpdateFlags.current['materials'] = true;
-        setMaterials(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'materials', JSON.stringify(data.items));
+        setMaterials(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'materials', JSON.stringify(items));
       }
     });
 
     // 4. Articles Real-time Cloud Sync
     const unsubArticles = subscribeToCloudDoc('articles', (data) => {
-      if (Array.isArray(data?.items) && data.items.length > 0) {
+      const items = extractItems(data);
+      if (items && items.length > 0) {
         remoteUpdateFlags.current['articles'] = true;
-        setArticles(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'articles', JSON.stringify(data.items));
+        setArticles(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'articles', JSON.stringify(items));
       }
     });
 
     // 5. Activities Real-time Cloud Sync
     const unsubActivities = subscribeToCloudDoc('activities', (data) => {
-      if (Array.isArray(data?.items)) {
+      const items = extractItems(data);
+      if (items) {
         remoteUpdateFlags.current['activities'] = true;
-        setActivities(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'activities', JSON.stringify(data.items));
+        setActivities(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'activities', JSON.stringify(items));
       }
     });
 
     // 6. Agenda Real-time Cloud Sync
     const unsubAgenda = subscribeToCloudDoc('agenda', (data) => {
-      if (Array.isArray(data?.items) && data.items.length > 0) {
+      const items = extractItems(data);
+      if (items && items.length > 0) {
         remoteUpdateFlags.current['agenda'] = true;
-        setAgenda(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'agenda', JSON.stringify(data.items));
+        setAgenda(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'agenda', JSON.stringify(items));
       }
     });
 
     // 7. Hero Real-time Cloud Sync
     const unsubHero = subscribeToCloudDoc('hero', (data) => {
-      if (data?.data && typeof data.data === 'object') {
+      const heroPayload = extractObjectDoc(data);
+      if (heroPayload) {
         remoteUpdateFlags.current['hero'] = true;
-        setHero(prev => ({ ...initialHero, ...prev, ...data.data }));
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify({ ...initialHero, ...data.data }));
+        setHero(prev => ({ ...initialHero, ...prev, ...heroPayload }));
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'hero', JSON.stringify({ ...initialHero, ...heroPayload }));
       }
     });
 
     // 8. Settings Real-time Cloud Sync
     const unsubSettings = subscribeToCloudDoc('settings', (data) => {
-      if (data?.data && typeof data.data === 'object') {
+      const settingsPayload = extractObjectDoc(data);
+      if (settingsPayload) {
         remoteUpdateFlags.current['settings'] = true;
-        setSettings(prev => ({ ...prev, ...data.data }));
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'settings', JSON.stringify(data.data));
+        setSettings(prev => ({ ...initialSettings, ...prev, ...settingsPayload }));
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'settings', JSON.stringify({ ...initialSettings, ...settingsPayload }));
       }
     });
 
     // 9. Media Real-time Cloud Sync
     const unsubMedia = subscribeToCloudDoc('media', (data) => {
-      if (Array.isArray(data?.items)) {
+      const items = extractItems(data);
+      if (items) {
         remoteUpdateFlags.current['media'] = true;
-        setMediaList(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'media', JSON.stringify(data.items));
+        setMediaList(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'media', JSON.stringify(items));
       }
     });
 
     // 10. Partners Real-time Cloud Sync
     const unsubPartners = subscribeToCloudDoc('partners', (data) => {
-      if (Array.isArray(data?.items)) {
+      const items = extractItems(data);
+      if (items) {
         remoteUpdateFlags.current['partners'] = true;
-        setPartners(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'partners', JSON.stringify(data.items));
+        setPartners(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'partners', JSON.stringify(items));
       }
     });
 
     // 11. Services Real-time Cloud Sync
     const unsubServices = subscribeToCloudDoc('services', (data) => {
-      if (Array.isArray(data?.items)) {
+      const items = extractItems(data);
+      if (items) {
         remoteUpdateFlags.current['services'] = true;
-        setServices(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'services', JSON.stringify(data.items));
+        setServices(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'services', JSON.stringify(items));
       }
     });
 
     // 12. Testimonials Real-time Cloud Sync
     const unsubTestimonials = subscribeToCloudDoc('testimonials', (data) => {
-      if (Array.isArray(data?.items)) {
+      const items = extractItems(data);
+      if (items) {
         remoteUpdateFlags.current['testimonials'] = true;
-        setTestimonials(data.items);
-        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'testimonials', JSON.stringify(data.items));
+        setTestimonials(items);
+        safeLocalStorageSet(STORAGE_KEY_PREFIX + 'testimonials', JSON.stringify(items));
       }
     });
 
