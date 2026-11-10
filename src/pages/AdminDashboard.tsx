@@ -37,7 +37,9 @@ import {
   User,
   School,
   FolderUp,
-  Database
+  Database,
+  Share2,
+  Link2
 } from 'lucide-react';
 import { getSupabaseConfig, setSupabaseConfig, isSupabaseConfigured } from '../lib/supabase';
 import { convertGDriveToDirectImageUrl, extractGDriveFileId, isGDriveUrl } from '../utils/gdrive';
@@ -2090,6 +2092,29 @@ end $$;`;
                           title="Ubah Status Pelaksanaan"
                         >
                           {isUpcoming ? 'Tandai Selesai' : 'Tandai Akan Datang'}
+                        </button>
+                        <a
+                          href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`📢 *JADWAL KEGIATAN KKG PJOK SD KECAMATAN PAGU*\n━━━━━━━━━━━━━━━━━━━━━━━━\n📌 *Kegiatan:* ${item.title}\n🏷️ *Kategori:* ${item.category}\n📅 *Hari/Tanggal:* ${item.date}\n⏰ *Waktu:* ${item.time}\n📍 *Tempat:* ${item.venue}\n━━━━━━━━━━━━━━━━━━━━━━━━\n🔗 *Buka detail resmi:* ${typeof window !== 'undefined' ? window.location.origin + window.location.pathname + '?page=agenda&id=' + item.id : ''}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                          title="Bagikan ke WhatsApp"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = typeof window !== 'undefined' ? window.location.origin + window.location.pathname + '?page=agenda&id=' + item.id : '';
+                            if (navigator.clipboard) {
+                              navigator.clipboard.writeText(url);
+                              showToast(`Link kegiatan "${item.title}" berhasil disalin!`, 'success');
+                            }
+                          }}
+                          className="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                          title="Salin Tautan Kegiatan"
+                        >
+                          <Link2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => {

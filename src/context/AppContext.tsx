@@ -93,8 +93,23 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const STORAGE_KEY_PREFIX = 'kkg_pjok_pagu_data_v3_';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentPage, setCurrentPage] = useState<NavPage>('beranda');
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<NavPage>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const pageParam = params.get('page');
+      if (pageParam && ['beranda', 'tentang-kami', 'program-kkg', 'perangkat-pembelajaran', 'kegiatan', 'agenda', 'kontak', 'admin'].includes(pageParam)) {
+        return pageParam as NavPage;
+      }
+    }
+    return 'beranda';
+  });
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('id') || null;
+    }
+    return null;
+  });
   const [globalSearchQuery, setGlobalSearchQuery] = useState<string>('');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
   const [isAdminDarkMode, setIsAdminDarkMode] = useState<boolean>(() => {
@@ -583,6 +598,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Window scroll to top on page change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage, selectedItemId]);
+
+  // Keep URL search params in sync with active page & item for seamless sharing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        if (currentPage === 'beranda') {
+          url.searchParams.delete('page');
+        } else {
+          url.searchParams.set('page', currentPage);
+        }
+        if (selectedItemId) {
+          url.searchParams.set('id', selectedItemId);
+        } else {
+          url.searchParams.delete('id');
+        }
+        window.history.replaceState({}, '', url.toString());
+      } catch (e) {
+        // ignore
+      }
+    }
   }, [currentPage, selectedItemId]);
 
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
